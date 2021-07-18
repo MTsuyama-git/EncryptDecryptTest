@@ -33,6 +33,30 @@ namespace EncryptDecryptTest
 
         private string keyPath = "";
 
+	public AsymmetricCipherKeyPair readRSAPrivateKey(string pemContents)
+	{
+	    var keyReader = new StringReader(pemContents);
+	    // read key without password
+	    AsymmetricCipherKeyPair kp = null;
+	    try {
+		PemReader pemReader0 = new PemReader(keyReader);
+	        kp = (AsymmetricCipherKeyPair) pemReader0.ReadObject();
+	    } catch(PasswordException pe) {
+		try {
+		    Console.Write("Password:");
+		    var line = System.Console.ReadLine();
+		    // read key with password
+		    var keyReader2 = new StringReader(pemContents);
+		    PemReader pemReader = new PemReader(keyReader2, pFinder: new PasswordFinder(line));
+		    // object privateKeyObject = pemReader.ReadObject();
+		    kp = (AsymmetricCipherKeyPair) pemReader.ReadObject();
+		} catch  (InvalidCipherTextException ice) {
+		    Console.WriteLine("Bad passphrase");
+		}
+	    }
+	    return kp;
+	}
+
         public Program(string[] args)
         {
             if (args.Length < 2)
@@ -55,58 +79,15 @@ namespace EncryptDecryptTest
                 keyPath = System.IO.Path.Combine(userprofile, ".ssh", "id_rsa");
             }
 	    Console.WriteLine(keyPath);
-            // using (BinaryReader br = new(File.Open(keyPath, FileMode.Open)))
-            // {
-            //     var arr = br.ReadBytes(512);
 
-            //     var rsa = RSA.Create();
-            //     int nBytes = 0;
-            //     rsa.ImportRSAPrivateKey(arr, out nBytes);
-            // }
 	    byte[] der = null;
 	    const string RsaPrivateKeyHeader = "-----BEGIN RSA PRIVATE KEY-----";
 	    const string RsaPrivateKeyFooter = "-----END RSA PRIVATE KEY-----";
 	    string pemContents = System.IO.File.ReadAllText(keyPath);
-
-	    // if (pemContents.StartsWith(RsaPrivateKeyHeader))
-	    // {
-	    // 	int endIdx = pemContents.IndexOf(
-	    // 	    RsaPrivateKeyFooter,
-	    // 	    RsaPrivateKeyHeader.Length,
-	    // 	    StringComparison.Ordinal);
-
-	    // 	string base64 = pemContents.Substring(
-	    // 	    RsaPrivateKeyHeader.Length,
-	    // 	    endIdx - RsaPrivateKeyHeader.Length);
-
-	    // 	der = Convert.FromBase64String(base64);
-	    // 	RSA rsa = RSA.Create();
-	    // 	rsa.ImportRSAPrivateKey(der, out _);
-	    // }
-	    var keyReader = new StringReader(pemContents);
-	    PemReader pemReader = new PemReader(keyReader, pFinder: new PasswordFinder("hogehoge"));
-	    // object privateKeyObject = pemReader.ReadObject();
-	    AsymmetricCipherKeyPair kp = (AsymmetricCipherKeyPair) pemReader.ReadObject();
-	    // RsaPrivateCrtKeyParameters rsaPrivatekey = (RsaPrivateCrtKeyParameters)privateKeyObject;
-	    // RsaKeyParameters rsaPublicKey = new RsaKeyParameters(false, rsaPrivatekey.Modulus, rsaPrivatekey.PublicExponent);
-	    // AsymmetricCipherKeyPair kp = new AsymmetricCipherKeyPair(rsaPublicKey, rsaPrivatekey);
-
-
-
-	    // using(StreamReader stream = new(keyPath, Encoding.UTF8))
-	    // {
-	    // 	var key = stream.ReadToEnd();
-	    // 	var encoded = key.Replace(@"-----BEGIN RSA PRIVATE KEY-----", string.Empty).
-	    // 	    Replace(@"-----END RSA PRIVATE KEY-----", string.Empty);
-	    // 	encoded = new Regex(@"\r?\n").Replace(encoded, string.Empty);
-	    // 	Console.WriteLine(encoded);
-	    // 	der = Convert.FromBase64String(encoded);
-	    // }
-	    
-	    // var rsa = RSA.Create();
-	    // int nBytes = 0;
-	    // rsa.ImportRSAPrivateKey(der, out nBytes);
-
+	    var kp = readRSAPrivateKey(pemContents);
+	    if(kp == null)
+		System.Environment.Exit(1);
+	    Console.WriteLine(kp);
         }
 
         static void Main(string[] args)
