@@ -84,11 +84,12 @@ namespace EncryptDecryptTest
 	    // 	rsa.ImportRSAPrivateKey(der, out _);
 	    // }
 	    var keyReader = new StringReader(pemContents);
-	    PemReader pemReader = new PemReader(keyReader, pFinder: new PasswordFinder("testtest"));
-	    object privateKeyObject = pemReader.ReadObject();
-	    RsaPrivateCrtKeyParameters rsaPrivatekey = (RsaPrivateCrtKeyParameters)privateKeyObject;
-	    RsaKeyParameters rsaPublicKey = new RsaKeyParameters(false, rsaPrivatekey.Modulus, rsaPrivatekey.PublicExponent);
-	    AsymmetricCipherKeyPair kp = new AsymmetricCipherKeyPair(rsaPublicKey, rsaPrivatekey);
+	    PemReader pemReader = new PemReader(keyReader, pFinder: new PasswordFinder("hogehoge"));
+	    // object privateKeyObject = pemReader.ReadObject();
+	    AsymmetricCipherKeyPair kp = (AsymmetricCipherKeyPair) pemReader.ReadObject();
+	    // RsaPrivateCrtKeyParameters rsaPrivatekey = (RsaPrivateCrtKeyParameters)privateKeyObject;
+	    // RsaKeyParameters rsaPublicKey = new RsaKeyParameters(false, rsaPrivatekey.Modulus, rsaPrivatekey.PublicExponent);
+	    // AsymmetricCipherKeyPair kp = new AsymmetricCipherKeyPair(rsaPublicKey, rsaPrivatekey);
 
 
 
