@@ -18,6 +18,8 @@ decrypt: $(DECRYPT_RELEASE_TARGET)
 	$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa_nopasswd
 release: $(ENCRYPT_RELEASE_TARGET)
 debug: $(ENCRYPT_DEBUG_TARGET)
+pem: data/id_rsa.pub
+	ssh-keygen -f data/id_rsa.pub -e -m PEM > data/id_rsa.pub.pem
 $(ENCRYPT_RELEASE_TARGET): Encrypt/Program.cs
 	dotnet build -p:Configuration=Release -p:Platform="Any CPU"
 $(ENCRYPT_DEBUG_TARGET): Encrypt/Program.cs
@@ -29,6 +31,8 @@ $(DECRYPT_DEBUG_TARGET): Decrypt/Program.cs
 data/id_rsa:
 	@mkdir -p $(dir $@)
 	ssh-keygen -f ./data/id_rsa -t rsa -m PEM
+data/id_rsa_nopasswd: data/id_rsa
+	cp ./data/id_rsa ./data/id_rsa_nopasswd
 
 .PHONY: clean
 clean:
