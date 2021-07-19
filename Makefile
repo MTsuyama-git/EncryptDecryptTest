@@ -40,4 +40,4 @@ data/id_rsa_nopasswd: data/id_rsa
 
 .PHONY: clean
 clean:
-	rm -rfv `find -name bin` `find -name obj` `find -name *~`
+	rm -rfv `find . -name bin` `find . -name obj` `find . -name *~`
