@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Cryptography;
 using System.Reflection;
 using System.IO;
@@ -11,8 +11,11 @@ namespace Encrypt
         public void readRSAPublicKey(string contents)
         {
             var rsa = RSAOpenSsl.Create();
-            var body = contents;
 
+	    const string RsaPublicKeyHeader = @"-----BEGIN RSA PUBLIC KEY-----";
+	    const string RsaPublicKeyFooter = @"-----END RSA PUBLIC KEY-----";
+
+            var body = contents.Replace(RsaPublicKeyHeader, String.Empty).Replace(RsaPublicKeyFooter, String.Empty).Replace("\r", String.Empty).Replace("\n", String.Empty);
             Console.WriteLine(body);
             var der = Convert.FromBase64String(body);
             // Console.WriteLine(der);

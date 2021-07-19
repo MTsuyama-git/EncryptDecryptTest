@@ -1,14 +1,30 @@
 .PHONY: clean encrypt decrypt
 
-encrypt: Encrypt/bin/Release/net5.0
-	./Encrypt/bin/Release/net5.0/Encrypt sample.txt sample.aes ./data.pub.txt
-decrypt: Decrypt/bin/Release/net5.0
-	./Decrypt/bin/Release/net5.0/Decrypt sample.txt sample.aes ./data_nopasswd.txt
-release: Encrypt/bin/Release/net5.0
-debug: Encrypt/bin/Debug/net5.0
-Encrypt/bin/Release/net5.0: 
+ifeq ($(OS),Windows_NT)
+ENCRYPT_RELEASE_TARGET := Encrypt/bin/Release/net5.0/Encrypt.exe
+DECRYPT_RELEASE_TARGET := Decrypt/bin/Release/net5.0/Decrypt.exe
+ENCRYPT_DEBUG_TARGET := Encrypt/bin/Debug/net5.0/Encrypt.exe
+DECRYPT_DEBUG_TARGET := Decrypt/bin/Debug/net5.0/Decrypt.exe
+else
+ENCRYPT_RELEASE_TARGET := Encrypt/bin/Release/net5.0/Encrypt
+DECRYPT_RELEASE_TARGET := Decrypt/bin/Release/net5.0/Decrypt
+ENCRYPT_DEBUG_TARGET := Encrypt/bin/Debug/net5.0/Encrypt
+DECRYPT_DEBUG_TARGET := Decrypt/bin/Debug/net5.0/Decrypt
+endif
+
+encrypt: $(ENCRYPT_RELEASE_TARGET)
+	./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa.pub.pem
+decrypt: $(DECRYPT_RELEASE_TARGET)
+	$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa_nopasswd
+release: $(ENCRYPT_RELEASE_TARGET)
+debug: $(ENCRYPT_DEBUG_TARGET)
+$(ENCRYPT_RELEASE_TARGET): Encrypt/Program.cs
 	dotnet build -p:Configuration=Release -p:Platform="Any CPU"
-Encrypt/bin/Debug/net5.0:
+$(ENCRYPT_DEBUG_TARGET): Encrypt/Program.cs
+	dotnet build -p:Configuration=Debug -p:Platform="Any CPU"
+$(DECRYPT_RELEASE_TARGET): Decrypt/Program.cs
+	dotnet build -p:Configuration=Release -p:Platform="Any CPU"
+$(DECRYPT_DEBUG_TARGET): Decrypt/Program.cs
 	dotnet build -p:Configuration=Debug -p:Platform="Any CPU"
 data/id_rsa:
 	@mkdir -p $(dir $@)
