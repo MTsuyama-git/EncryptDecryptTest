@@ -17,7 +17,7 @@ DECRYPT_DEBUG_TARGET := Decrypt/bin/Debug/net5.0/Decrypt
 endif
 
 encrypt: $(ENCRYPT_RELEASE_TARGET)
-	$(DOCKER_CMD) ./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa.pub.pem
+	$(DOCKER_CMD) ./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa.pub
 decrypt: $(DECRYPT_RELEASE_TARGET)
 	$(DOCKER_CMD) ./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa_nopasswd
 release: $(ENCRYPT_RELEASE_TARGET)
