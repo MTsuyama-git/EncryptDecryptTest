@@ -196,7 +196,7 @@ namespace Encrypt
 	    Console.WriteLine();
 	}
 
-	public void readSSHPublicKey(string contents)
+	public RSAParameters readSSHPublicKey(string contents)
 	{
 	    var items = contents.Split(del, StringSplitOptions.RemoveEmptyEntries);
 	    sshkey_types keytype = key_type_from_name(items[0]);
@@ -211,17 +211,12 @@ namespace Encrypt
 	    byte[] rsa_n = readBinary(data); // modulus
 	    dump(rsa_e);
 	    dump(rsa_n);
-	    using (var rsa = new RSACryptoServiceProvider())
-	    {
-		rsa.ImportParameters(new RSAParameters {
-			Exponent = rsa_e,
-			Modulus  = rsa_n
-		    });
-		var plainBytes = Encoding.UTF8.GetBytes("testtest");
-		var cipherBytes = rsa.Encrypt(plainBytes, RSAEncryptionPadding.Pkcs1);
-	    }
-	    // RSA_set0_key(k->rsa, rsa_n_v, rsa_e_v, NULL)
 	    
+	    return new RSAParameters {
+		Exponent = rsa_e,
+		Modulus  = rsa_n
+	    };
+   
 	}
 
         public void readRSAPublicKey(string contents)
@@ -275,6 +270,7 @@ namespace Encrypt
             // string contents = System.IO.File.ReadAllText(keyPath);
             // readRSAPublicKey(contents);
 	    string line;
+	    RSAParameters rsaParams;
 	    using (StreamReader sr = new (keyPath)){
 		while ((line = sr.ReadLine()) != null)
 		{
@@ -286,9 +282,21 @@ namespace Encrypt
 		    }
 		    var items = line.Split(del, StringSplitOptions.RemoveEmptyEntries);
 		    if(items.Length >= 3) {
-			this.readSSHPublicKey(line);
+			try {
+			    rsaParams = this.readSSHPublicKey(line);
+			    using (var rsa = new RSACryptoServiceProvider())
+			    {
+				rsa.ImportParameters(rsaParams);
+				var plainBytes = Encoding.UTF8.GetBytes("testtest");
+				var cipherBytes = rsa.Encrypt(plainBytes, RSAEncryptionPadding.Pkcs1);
+				dump(cipherBytes);
+			    }
+			} catch(Exception e) {
+			}
 		    }
 		}
+
+		// RSA_set0_key(k->rsa, rsa_n_v, rsa_e_v, NULL)
 	    }
         }
 
