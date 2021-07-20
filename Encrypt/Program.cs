@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Reflection;
 using System.IO;
 using System.Text;
+using Utility;
 
 namespace Encrypt
 {
@@ -162,32 +163,6 @@ namespace Encrypt
 	    return sshkey_types.KEY_UNSPEC;
 	}
 
-	private static string getString(PointedData data)
-	{
-	    Encoding enc = Encoding.GetEncoding("UTF-8");
-	    int length = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
-	    data.Consume(4);
-	    string result = enc.GetString(data.SubArray(length));
-	    data.Consume(length);
-	    return result;
-	    
-	}
-
-	private static byte[] readBinary(PointedData data, bool trim=true)
-	{
-	    Encoding enc = Encoding.GetEncoding("UTF-8");
-	    int length = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
-	    data.Consume(4);
-	    if(trim) {
-		while(data[0] == 0x0 && length > 0) {
-		    length -= 1;
-		    data.Consume(1);
-		}
-	    }
-	    return data.SubArray(length);
-	    
-	}
-
 	private static void dump(byte[] b)
 	{
 	    foreach(byte e in b) {
@@ -200,15 +175,15 @@ namespace Encrypt
 	{
 	    var items = contents.Split(del, StringSplitOptions.RemoveEmptyEntries);
 	    sshkey_types keytype = key_type_from_name(items[0]);
-	    PointedData data = 	new(Convert.FromBase64String(items[1]));
-	    string name = getString(data);
+	    ConsumableData data = new(Convert.FromBase64String(items[1]));
+	    string name = data.StrData;
 	    sshkey_types keytype2 = key_type_from_name(name);
 	    if(keytype != keytype2) {
 		Console.Error.WriteLine("Invalid key");
 		Environment.Exit(1);
 	    }
-	    byte[] rsa_e = readBinary(data); //exponent
-	    byte[] rsa_n = readBinary(data); // modulus
+	    byte[] rsa_e = data.trimmedRawData; //exponent
+	    byte[] rsa_n = data.trimmedRawData; // modulus
 	    dump(rsa_e);
 	    dump(rsa_n);
 	    
@@ -218,31 +193,6 @@ namespace Encrypt
 	    };
    
 	}
-
-        public void readRSAPublicKey(string contents)
-        {
-            var rsa = RSAOpenSsl.Create();
-
-	    const string RsaPublicKeyHeader = @"-----BEGIN RSA PUBLIC KEY-----";
-	    const string RsaPublicKeyFooter = @"-----END RSA PUBLIC KEY-----";
-
-            var body = contents.Replace(RsaPublicKeyHeader, String.Empty).Replace(RsaPublicKeyFooter, String.Empty).Replace("\r", String.Empty).Replace("\n", String.Empty);
-            Console.WriteLine(body);
-            var der = Convert.FromBase64String(body);
-            // Console.WriteLine(der);
-
-            string text = "";
-            string tmp = "";
-            foreach (byte b in der)
-            {
-                text = string.Format("{0,3:X2}", b);
-                tmp = text + tmp;
-            }
-            Console.WriteLine("\n" + tmp + "\n");
-
-
-            rsa.ImportRSAPublicKey(der, out _);
-        }
 
         public Program(string[] args)
         {
@@ -295,8 +245,6 @@ namespace Encrypt
 			}
 		    }
 		}
-
-		// RSA_set0_key(k->rsa, rsa_n_v, rsa_e_v, NULL)
 	    }
         }
 

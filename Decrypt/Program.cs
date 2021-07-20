@@ -4,86 +4,63 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Prng;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Security;
+using Utility;
 
-namespace EncryptDecryptTest
+namespace Decrypt
 {
     class Program
     {
-        private class PasswordFinder : IPasswordFinder
-        {
-            private readonly string password;
-
-            public PasswordFinder(string password)
-            {
-                this.password = password;
-            }
-
-
-            public char[] GetPassword()
-            {
-                return password.ToCharArray();
-            }
-        }
 
         private string keyPath = "";
 
-	public void readRSAPrivateKeyCrypto(string pemContents)
-        {
-            var rsa = RSAOpenSsl.Create();
-            string password = "hogehoge";
-            const string RsaPrivateKeyHeader = @"-----BEGIN RSA PRIVATE KEY-----";
-            const string RsaPrivateKeyFooter = @"-----END RSA PRIVATE KEY-----";
-            var keybody = pemContents.Replace(RsaPrivateKeyHeader, String.Empty).Replace(RsaPrivateKeyFooter, String.Empty).Replace("\r", "").Replace("\n", "");
-            Console.WriteLine(keybody);
-            // var privateKeyBytes = Convert.FromBase64String(keybody);
-            // rsa.ImportRSAPrivateKey(privateKeyBytes, out _); 
-
-	    var der = Convert.FromBase64String(keybody);
-	    string text = "";
-	    string tmp = "";
-            foreach(byte b in der)
-            {
-                text = string.Format("{0,3:X2}", b);
-                tmp = text + tmp;
-            }
-            Console.WriteLine("\n" + tmp + "\n");
-	    rsa.ImportRSAPrivateKey(der, out _ );
-            // rsa.ImportEncryptedPkcs8PrivateKey(System.Text.Encoding.UTF8.GetBytes(password), der, out _);
-            // rsa.ImportEncryptedPkcs8PrivateKey(System.Text.Encoding.UTF8.GetBytes(password), System.Text.Encoding.UTF8.GetBytes(keybody), out _);
-        }
-
-	public AsymmetricCipherKeyPair readRSAPrivateKey(string pemContents)
+	public void readSSHPrivateKey(string contents)
 	{
-	    var keyReader = new StringReader(pemContents);
-	    // read key without password
-	    AsymmetricCipherKeyPair kp = null;
-	    try {
-		PemReader pemReader0 = new PemReader(keyReader);
-	        kp = (AsymmetricCipherKeyPair) pemReader0.ReadObject();
-	    } catch (PasswordException)
-            {
-		try {
-		    Console.Write("Password:");
-		    var line = System.Console.ReadLine();
-		    // read key with password
-		    var keyReader2 = new StringReader(pemContents);
-		    PemReader pemReader = new PemReader(keyReader2, pFinder: new PasswordFinder(line));
-		    // object privateKeyObject = pemReader.ReadObject();
-		    kp = (AsymmetricCipherKeyPair) pemReader.ReadObject();
-		} catch  (InvalidCipherTextException) {
-		    Console.WriteLine("Bad passphrase");
-		}
-	    } catch(PemException pe) {
-		Console.WriteLine(pe);
+	    const string RsaPrivateKeyHeader = @"-----BEGIN RSA PRIVATE KEY-----";
+            const string RsaPrivateKeyFooter = @"-----END RSA PRIVATE KEY-----";
+	    const string OpenSSHPrivateKeyHeader = @"-----BEGIN OPENSSH PRIVATE KEY-----";
+            const string OpenSSHPrivateKeyFooter = @"-----END OPENSSH PRIVATE KEY-----";
+
+	    if(contents.Substring(0, RsaPrivateKeyHeader.Length) == RsaPrivateKeyHeader) {
+		// TODO: old style
+		Console.WriteLine(RsaPrivateKeyHeader);
 	    }
-	    return kp;
+	    else if(contents.Substring(0, OpenSSHPrivateKeyHeader.Length) == OpenSSHPrivateKeyHeader) {
+		// newer style
+		contents = contents.Replace(OpenSSHPrivateKeyHeader, String.Empty).Replace(OpenSSHPrivateKeyFooter, String.Empty).Replace("\r", String.Empty).Replace("\n", String.Empty);
+		ConsumableData data = new(Convert.FromBase64String(contents));
+	        string magic = data.readString(14);
+		data.Consume(1);
+		string cipher_name = data.StrData;
+		string kdf_name = data.StrData;
+		// ConsumableData kdf = new(data.StrData);
+		// string kdf = data.StrData;
+		ConsumableData kdf = new(data.rawData);
+		int    nkeys = data.U32;
+		ConsumableData pubkey = new(data.rawData);
+		int encryptedLen = data.U32;
+		
+		Console.WriteLine(magic);
+		Console.WriteLine(cipher_name);
+		Console.WriteLine(kdf_name);
+		kdf.dump();
+		Console.WriteLine("kdf:" + kdf.Size);
+		Console.WriteLine("nkeys:" + nkeys);
+		Console.WriteLine("encryptedLen:" + encryptedLen);
+		Console.WriteLine("pubKey:" + pubkey.Size);
+		pubkey.dump();
+
+		string salt = kdf.StrData;
+		int round = kdf.U32;
+		Console.WriteLine("Salt:" + salt);
+		Console.WriteLine("Round:" + round);
+	    }
+	    else {
+		throw new Exception("Invalid SSH key type");
+	    }
+	    
 	}
+
+
 
         public Program(string[] args)
         {
@@ -108,11 +85,8 @@ namespace EncryptDecryptTest
             }
 	    Console.WriteLine(keyPath);
 
-	    byte[] der = null;
-	    const string RsaPrivateKeyHeader = "-----BEGIN RSA PRIVATE KEY-----";
-	    const string RsaPrivateKeyFooter = "-----END RSA PRIVATE KEY-----";
-	    string pemContents = System.IO.File.ReadAllText(keyPath);
-	    readRSAPrivateKeyCrypto(pemContents);
+	    
+	    readSSHPrivateKey(System.IO.File.ReadAllText(keyPath));
 	    // var kp = readRSAPrivateKey(pemContents);
 	    // if(kp == null)
 	    // 	System.Environment.Exit(1);
