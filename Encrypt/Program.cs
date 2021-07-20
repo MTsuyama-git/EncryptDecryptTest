@@ -110,46 +110,46 @@ namespace Encrypt
 
 	static readonly KeyType[] keytypes = new KeyType[] {
 	    new KeyType("ssh-ed25519", "ED25519", null, sshkey_types.KEY_ED25519, 0, 0, 0),
-	    // { "ssh-ed25519-cert-v01@openssh.com", "ED25519-CERT", null,
-	    //   KEY_ED25519_CERT, 0, 1, 0 },
-	    // { "sk-ssh-ed25519@openssh.com", "ED25519-SK", null,
-	    //   KEY_ED25519_SK, 0, 0, 0 },
-	    // { "sk-ssh-ed25519-cert-v01@openssh.com", "ED25519-SK-CERT", null,
-	    //   KEY_ED25519_SK_CERT, 0, 1, 0 },
-	    // { "ssh-xmss@openssh.com", "XMSS", null, KEY_XMSS, 0, 0, 0 },
-	    // { "ssh-xmss-cert-v01@openssh.com", "XMSS-CERT", null,
-	    //   KEY_XMSS_CERT, 0, 1, 0 },
-	    // { "ssh-rsa", "RSA", null, KEY_RSA, 0, 0, 0 },
-	    // { "rsa-sha2-256", "RSA", null, KEY_RSA, 0, 0, 1 },
-	    // { "rsa-sha2-512", "RSA", null, KEY_RSA, 0, 0, 1 },
-	    // { "ssh-dss", "DSA", null, KEY_DSA, 0, 0, 0 },
-	    // { "ecdsa-sha2-nistp256", "ECDSA", null,
-	    //   KEY_ECDSA, NID_X9_62_prime256v1, 0, 0 },
-	    // { "ecdsa-sha2-nistp384", "ECDSA", null,
-	    //   KEY_ECDSA, NID_secp384r1, 0, 0 },
-	    // { "ecdsa-sha2-nistp521", "ECDSA", null,
-	    //   KEY_ECDSA, NID_secp521r1, 0, 0 },
-	    // { "sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", null,
-	    //   KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 0 },
-	    // { "webauthn-sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", null,
-	    //   KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 1 },
-	    // { "ssh-rsa-cert-v01@openssh.com", "RSA-CERT", null,
-	    //   KEY_RSA_CERT, 0, 1, 0 },
-	    // { "rsa-sha2-256-cert-v01@openssh.com", "RSA-CERT",
-	    //   "rsa-sha2-256", KEY_RSA_CERT, 0, 1, 1 },
-	    // { "rsa-sha2-512-cert-v01@openssh.com", "RSA-CERT",
-	    //   "rsa-sha2-512", KEY_RSA_CERT, 0, 1, 1 },
-	    // { "ssh-dss-cert-v01@openssh.com", "DSA-CERT", null,
-	    //   KEY_DSA_CERT, 0, 1, 0 },
-	    // { "ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-CERT", null,
-	    //   KEY_ECDSA_CERT, NID_X9_62_prime256v1, 1, 0 },
-	    // { "ecdsa-sha2-nistp384-cert-v01@openssh.com", "ECDSA-CERT", null,
-	    //   KEY_ECDSA_CERT, NID_secp384r1, 1, 0 },
-	    // { "ecdsa-sha2-nistp521-cert-v01@openssh.com", "ECDSA-CERT", null,
-	    //   KEY_ECDSA_CERT, NID_secp521r1, 1, 0 },
-	    // { "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-SK-CERT", null,
-	    //   KEY_ECDSA_SK_CERT, NID_X9_62_prime256v1, 1, 0 },
-	    // { null, null, null, -1, -1, 0, 0 }
+	    new KeyType( "ssh-ed25519-cert-v01@openssh.com", "ED25519-CERT", null,
+	      sshkey_types.KEY_ED25519_CERT, 0, 1, 0 ),
+	    new KeyType( "sk-ssh-ed25519@openssh.com", "ED25519-SK", null,
+	      sshkey_types.KEY_ED25519_SK, 0, 0, 0 ),
+	    new KeyType( "sk-ssh-ed25519-cert-v01@openssh.com", "ED25519-SK-CERT", null,
+	      sshkey_types.KEY_ED25519_SK_CERT, 0, 1, 0 ),
+	    new KeyType( "ssh-xmss@openssh.com", "XMSS", null, sshkey_types.KEY_XMSS, 0, 0, 0 ),
+	    new KeyType( "ssh-xmss-cert-v01@openssh.com", "XMSS-CERT", null,
+	      sshkey_types.KEY_XMSS_CERT, 0, 1, 0 ),
+	    new KeyType( "ssh-rsa", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 0 ),
+	    new KeyType( "rsa-sha2-256", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 1 ),
+	    new KeyType( "rsa-sha2-512", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 1 ),
+	    new KeyType( "ssh-dss", "DSA", null, sshkey_types.KEY_DSA, 0, 0, 0 ),
+	    // new KeyType( "ecdsa-sha2-nistp256", "ECDSA", null,
+	    //   sshkey_types.KEY_ECDSA, NID_X9_62_prime256v1, 0, 0 ),
+	    // new KeyType( "ecdsa-sha2-nistp384", "ECDSA", null,
+	    //   sshkey_types.KEY_ECDSA, NID_secp384r1, 0, 0 ),
+	    // new KeyType( "ecdsa-sha2-nistp521", "ECDSA", null,
+	    //   sshkey_types.KEY_ECDSA, NID_secp521r1, 0, 0 ),
+	    // new KeyType( "sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", null,
+	    //   sshkey_types.KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 0 ),
+	    // new KeyType( "webauthn-sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", null,
+	    //   sshkey_types.KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 1 ),
+	    // new KeyType( "ssh-rsa-cert-v01@openssh.com", "RSA-CERT", null,
+	    //   sshkey_types.KEY_RSA_CERT, 0, 1, 0 ),
+	    // new KeyType( "rsa-sha2-256-cert-v01@openssh.com", "RSA-CERT",
+	    //   "rsa-sha2-256", sshkey_types.KEY_RSA_CERT, 0, 1, 1 ),
+	    // new KeyType( "rsa-sha2-512-cert-v01@openssh.com", "RSA-CERT",
+	    //   "rsa-sha2-512", sshkey_types.KEY_RSA_CERT, 0, 1, 1 ),
+	    // new KeyType( "ssh-dss-cert-v01@openssh.com", "DSA-CERT", null,
+	    //   sshkey_types.KEY_DSA_CERT, 0, 1, 0 ),
+	    // new KeyType( "ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-CERT", null,
+	    //   sshkey_types.KEY_ECDSA_CERT, NID_X9_62_prime256v1, 1, 0 ),
+	    // new KeyType( "ecdsa-sha2-nistp384-cert-v01@openssh.com", "ECDSA-CERT", null,
+	    //   sshkey_types.KEY_ECDSA_CERT, NID_secp384r1, 1, 0 ),
+	    // new KeyType( "ecdsa-sha2-nistp521-cert-v01@openssh.com", "ECDSA-CERT", null,
+	    //   sshkey_types.KEY_ECDSA_CERT, NID_secp521r1, 1, 0 ),
+	    // new KeyType( "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-SK-CERT", null,
+	    //   sshkey_types.KEY_ECDSA_SK_CERT, NID_X9_62_prime256v1, 1, 0 ),
+	    new KeyType( null, null, null, sshkey_types.KEY_UNSPEC, -1, 0, 0 )
 	};
 
 	private static sshkey_types key_type_from_name(string name)
@@ -167,8 +167,33 @@ namespace Encrypt
 	    Encoding enc = Encoding.GetEncoding("UTF-8");
 	    int length = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
 	    data.Consume(4);
-	    return enc.GetString(data.SubArray(length));
+	    string result = enc.GetString(data.SubArray(length));
+	    data.Consume(length);
+	    return result;
 	    
+	}
+
+	private static byte[] readBinary(PointedData data, bool trim=true)
+	{
+	    Encoding enc = Encoding.GetEncoding("UTF-8");
+	    int length = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+	    data.Consume(4);
+	    if(trim) {
+		while(data[0] == 0x0 && length > 0) {
+		    length -= 1;
+		    data.Consume(1);
+		}
+	    }
+	    return data.SubArray(length);
+	    
+	}
+
+	private static void dump(byte[] b)
+	{
+	    foreach(byte e in b) {
+		Console.Write(string.Format("{0,2:X2}", e)+ " ");
+	    }
+	    Console.WriteLine();
 	}
 
 	public void readSSHPublicKey(string contents)
@@ -177,7 +202,26 @@ namespace Encrypt
 	    sshkey_types keytype = key_type_from_name(items[0]);
 	    PointedData data = 	new(Convert.FromBase64String(items[1]));
 	    string name = getString(data);
-	    Console.WriteLine(name);
+	    sshkey_types keytype2 = key_type_from_name(name);
+	    if(keytype != keytype2) {
+		Console.Error.WriteLine("Invalid key");
+		Environment.Exit(1);
+	    }
+	    byte[] rsa_e = readBinary(data); //exponent
+	    byte[] rsa_n = readBinary(data); // modulus
+	    dump(rsa_e);
+	    dump(rsa_n);
+	    using (var rsa = new RSACryptoServiceProvider())
+	    {
+		rsa.ImportParameters(new RSAParameters {
+			Exponent = rsa_e,
+			Modulus  = rsa_n
+		    });
+		var plainBytes = Encoding.UTF8.GetBytes("testtest");
+		var cipherBytes = rsa.Encrypt(plainBytes, RSAEncryptionPadding.Pkcs1);
+	    }
+	    // RSA_set0_key(k->rsa, rsa_n_v, rsa_e_v, NULL)
+	    
 	}
 
         public void readRSAPublicKey(string contents)
