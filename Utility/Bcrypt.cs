@@ -13,48 +13,47 @@ namespace Utility
         {
             Blowfish state = new ();
             string ciphertext = "OxychromaticBlowfishSwatDynamite";
-            Uint32[] cdata = new[BCTYPT_WORDS];
-            byte[] result = new[salt.Length];
-            Uint16 j;
+            UInt32[] cdata = new UInt32[BCRYPT_WORDS];
+            byte[] result = new byte[salt.Length];
+            UInt16 j;
             int shalen = SHA512_DIGEST_LENGTH;
 
-            state.expandstate(salt, salt, shalen, result, shalen);
+            state.expandstate(salt, result);
             for(int i = 0; i < 64; ++i) {
-                state.expand0state(state, salt, shalen);
-                state.expand0state(state, result, shalen);
+                state.expandstate(salt);
+                state.expandstate(result);
             }
             
             j = 0;
 
             for(int i = 0; i < BCRYPT_WORDS; ++i) 
-                cdata[i] = Blowfish.stream2word(ciphertext, out j);
+                cdata[i] = Blowfish.stream2word(ciphertext, ref j);
             int sizeofCdata = System.Runtime.InteropServices.Marshal.SizeOf(
 		    cdata.GetType().GetElementType())*cdata.Length;
-            int sizeofUI64 = System.Runtime.InteropServices.Marshal.SizeOf(Uint64);
             for(int i = 0; i < 64; ++i)
-                state.enc(cdata, sizeofCdata/sizeofUI64);
+                state.enc(cdata, (UInt16)(sizeofCdata/sizeof(UInt64)));
             for(int i = 0; i < BCRYPT_WORDS; ++i) {
-                result[4 * i + 3] = (cdata[i] >> 24) & 0xFF;
-                result[4 * i + 2] = (cdata[i] >> 16) & 0xFF;
-                result[4 * i + 1] = (cdata[i] >> 8) & 0xFF;
-                result[4 * i + 0] = (cdata[i] >> 0) & 0xFF;
+                result[4 * i + 3] = (byte)((cdata[i] >> 24) & 0xFF);
+                result[4 * i + 2] = (byte)((cdata[i] >> 16) & 0xFF);
+                result[4 * i + 1] = (byte)((cdata[i] >> 8) & 0xFF);
+                result[4 * i + 0] = (byte)((cdata[i] >> 0) & 0xFF);
             }
             
             return result;
         }
 
 
-        static int pbkdf(const string& password, byte[] salt, out byte[] key, int rounds)
+        static int pbkdf(string password, byte[] salt, out byte[] key, int rounds)
         {
-            byte[]  sha2salt  = new [SHA512_DIGEST_LENGTH];
-            byte[]  output    = new [BCRYPT_HASHSIZE];
-            byte[]  tmpoutput = new [BCRYPT_HASHSIZE];
-            byte[]  countsalt = new [salt.Length + 4];
-            int i, j, amt, stride;
+            byte[]  sha2salt  = new byte[SHA512_DIGEST_LENGTH];
+            byte[]  output    = new byte[BCRYPT_HASHSIZE];
+            byte[]  tmpoutput = new byte[BCRYPT_HASHSIZE];
+            byte[]  countsalt = new byte[salt.Length + 4];
+            int amt, stride;
             int count;
             int origkeylen = key.Length;
 
-            Array.Fill(countsalt, 1);
+            Array.Fill<byte>(countsalt, 1);
 
             if(rounds < 1)
                 throw new Exception("Rounds must be greater than 0.");
@@ -67,14 +66,6 @@ namespace Utility
             
             byte[]  sha2pass  = hash_sha512(password);
 
-            
-            
-            
-            
         }
-
-
     }
-
-
 }

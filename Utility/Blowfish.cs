@@ -5,14 +5,14 @@ namespace Utility
 {
     class Blowfish
     {
-        static readonly int BLF_N = 16;
-        static readonly int BLF_MAXKEYLEN = (BLF_N - 2) * 4;
-        static readonly int BLF_MAXUTILIZED = (BLF_N + 2) * 4;
-        Uint32[,] S;
-        Uint32[] P;
+        const int BLF_N = 16;
+        const int BLF_MAXKEYLEN = (BLF_N - 2) * 4;
+        const int BLF_MAXUTILIZED = (BLF_N + 2) * 4;
+        UInt32[,] S;
+        UInt32[] P;
 
         public Blowfish() {
-            S = new Uint32[4,256] {
+            S = new UInt32[4,256] {
                 {
                     0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
                     0xb8e1afed, 0x6a267e96, 0xba7c9045, 0xf12c7f99,
@@ -275,7 +275,7 @@ namespace Utility
                     0xb74e6132, 0xce77e25b, 0x578fdfe3, 0x3ac372e6
                 }
             };
-            P = new Uint32[BLF_N+2] {
+            P = new UInt32[BLF_N+2] {
 		0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344,
 		0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89,
 		0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
@@ -284,20 +284,104 @@ namespace Utility
             };
         }
         
-        static Uint32 stream2word(const byte[] data, out Uint16 current)
+        public static UInt32 stream2word(in string data, ref UInt16 current)
         {
-            Uint16 j;
-            Uint32 temp;
+            return stream2word(System.Text.Encoding.UTF8.GetBytes(data), ref current);
+        }
+
+        public static UInt32 stream2word(in byte[] data, ref UInt16 current)
+        {
+            UInt16 j;
+            UInt32 temp;
 
             temp = 0x00000000;
             j = current;
-            for(byte i = 0; i < 4; ++i; ++j) {
+            for(byte i = 0; i < 4; ++i, ++j) {
                 if(j >= data.Length)
                 j = 0;
                 temp = (temp << 8) | data[j];
             }
             current = j;
             return temp;
+        }
+
+        public void expandstate(byte[] key, in byte[] data=null)
+        {
+            UInt16 j;
+            UInt32 temp, datal, datar;
+
+            j = 0;
+            for(UInt16 i = 0; i < BLF_N + 2; ++i)
+            {
+                temp = stream2word(in key, ref j);
+                this.P[i] = this.P[i] ^ temp;
+            }
+            
+            j = 0;
+            datal = 0x00000000;
+            datar = 0x00000000;
+            for(UInt16 i = 0; i < BLF_N + 2; i += 2)
+            {
+                if(data) {
+                    datal ^= stream2word(in data, j);
+                    datar ^= stream2word(in data, j);
+                }
+                encipher(datal, datar);
+                
+                this.P[i] = datal;
+                this.P[i+1] = datar;
+            }
+
+            for(UInt16 i = 0; i < 4; ++i) {
+                for(UInt16 k = 0; k < 256; k += 2) {
+                    if(data) {
+                        datal ^= stream2word(in data, j);
+                        datar ^= stream2word(in data, j);
+                    }
+                    encipher(datal, datar);
+                    this.S[i][k] = datal;
+                    this.S[i][k+1] = datar;
+                }
+            }
+        }
+
+        private static UInt32 F(UInt32[] s, UInt32 x) 
+        {
+            return (s[(x >> 24) & 0xFF] + s[0x100 + ((x>>16)&0xFF)]) ^ s[0x200 + ((x >> 8)&0xFF)] + s[0x300 + (x & 0xFF)];
+        }
+
+        public static void RND(in UInt32[] s, in UInt32[] p, ref UInt32 i, in UInt32 j, in UInt32 n) 
+        { 
+            i ^= (F(s, j) ^ p[n]); 
+        }
+
+        public void encipher(ref UInt32 xl, ref UInt32 xr) 
+        {
+            UInt32 Xl;
+            UInt32 Xr;
+
+            Xl = xl;
+            Xr = xr;
+            
+            Xl ^= p[0];
+            for(UInt8 i = 1; i <= 16; ++i) {
+                if((i % 2) == 1) {
+                    RND(in S[0], in P, ref Xr, ref Xl, in i);
+                }
+                else {
+                    RND(in S[0], in P, ref Xl, ref Xr, in i);
+                }
+            }
+            xl = Xr ^ P[17];
+            xr = Xl;
+        }
+
+        public void enc(UInt32[] data, in UInt16 blocks)
+        {
+            for(UInt16 i = 0; i < blocks; ++i)
+            {
+                encipher(data, ref data[2*i], ref data[2*i+1]);
+            }
         }
     }
 }
