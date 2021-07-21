@@ -1,6 +1,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Reflection;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Utility;
@@ -109,21 +110,18 @@ namespace Encrypt
     {
 	private readonly char[] del = { '\t', ' ' };
 
-	static readonly KeyType[] keytypes = new KeyType[] {
-	    new KeyType("ssh-ed25519", "ED25519", null, sshkey_types.KEY_ED25519, 0, 0, 0),
-	    new KeyType( "ssh-ed25519-cert-v01@openssh.com", "ED25519-CERT", null,
-	      sshkey_types.KEY_ED25519_CERT, 0, 1, 0 ),
-	    new KeyType( "sk-ssh-ed25519@openssh.com", "ED25519-SK", null,
-	      sshkey_types.KEY_ED25519_SK, 0, 0, 0 ),
-	    new KeyType( "sk-ssh-ed25519-cert-v01@openssh.com", "ED25519-SK-CERT", null,
-	      sshkey_types.KEY_ED25519_SK_CERT, 0, 1, 0 ),
-	    new KeyType( "ssh-xmss@openssh.com", "XMSS", null, sshkey_types.KEY_XMSS, 0, 0, 0 ),
-	    new KeyType( "ssh-xmss-cert-v01@openssh.com", "XMSS-CERT", null,
-	      sshkey_types.KEY_XMSS_CERT, 0, 1, 0 ),
-	    new KeyType( "ssh-rsa", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 0 ),
-	    new KeyType( "rsa-sha2-256", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 1 ),
-	    new KeyType( "rsa-sha2-512", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 1 ),
-	    new KeyType( "ssh-dss", "DSA", null, sshkey_types.KEY_DSA, 0, 0, 0 ),
+        static readonly Dictionary<string, KeyType> keyTypes = new () {
+	    {"ssh-ed25519", new KeyType("ssh-ed25519", "ED25519", null, sshkey_types.KEY_ED25519, 0, 0, 0)},
+	    {"ssh-ed25519-cert-v01@openssh.com", new KeyType( "ssh-ed25519-cert-v01@openssh.com", "ED25519-CERT", null, sshkey_types.KEY_ED25519_CERT, 0, 1, 0 )},
+            {"sk-ssh-ed25519@openssh.com", new KeyType( "sk-ssh-ed25519@openssh.com", "ED25519-SK", null, sshkey_types.KEY_ED25519_SK, 0, 0, 0 )},
+            {"sk-ssh-ed25519-cert-v01@openssh.com", new KeyType( "sk-ssh-ed25519-cert-v01@openssh.com", "ED25519-SK-CERT", null, sshkey_types.KEY_ED25519_SK_CERT, 0, 1, 0 )},
+            {"ssh-xmss@openssh.com", new KeyType( "ssh-xmss@openssh.com", "XMSS", null, sshkey_types.KEY_XMSS, 0, 0, 0 )},
+            {"ssh-xmss-cert-v01@openssh.com", new KeyType( "ssh-xmss-cert-v01@openssh.com", "XMSS-CERT", null, sshkey_types.KEY_XMSS_CERT, 0, 1, 0 )},
+            {"ssh-rsa", new KeyType( "ssh-rsa", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 0 )},
+            {"ssh-rsa2-256", new KeyType( "rsa-sha2-256", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 1 )},
+            {"ssh-rsa2-512", new KeyType( "rsa-sha2-512", "RSA", null, sshkey_types.KEY_RSA, 0, 0, 1 )},
+            {"ssh-dss", new KeyType( "ssh-dss", "DSA", null, sshkey_types.KEY_DSA, 0, 0, 0 )},
+            {"unspec", new KeyType( null, null, null, sshkey_types.KEY_UNSPEC, -1, 0, 0 )},
 	    // new KeyType( "ecdsa-sha2-nistp256", "ECDSA", null,
 	    //   sshkey_types.KEY_ECDSA, NID_X9_62_prime256v1, 0, 0 ),
 	    // new KeyType( "ecdsa-sha2-nistp384", "ECDSA", null,
@@ -150,17 +148,11 @@ namespace Encrypt
 	    //   sshkey_types.KEY_ECDSA_CERT, NID_secp521r1, 1, 0 ),
 	    // new KeyType( "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-SK-CERT", null,
 	    //   sshkey_types.KEY_ECDSA_SK_CERT, NID_X9_62_prime256v1, 1, 0 ),
-	    new KeyType( null, null, null, sshkey_types.KEY_UNSPEC, -1, 0, 0 )
-	};
+        };
 
 	private static sshkey_types key_type_from_name(string name)
 	{
-	    foreach(var keytype in keytypes) {
-		if(keytype.name == name) {
-		    return keytype.type;
-		}
-	    }
-	    return sshkey_types.KEY_UNSPEC;
+            return keyTypes[name].type;
 	}
 
 	private static void dump(byte[] b)
