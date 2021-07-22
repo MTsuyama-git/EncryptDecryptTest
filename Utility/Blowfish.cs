@@ -322,7 +322,7 @@ namespace Utility
             datar = 0x00000000;
             for(UInt16 i = 0; i < BLF_N + 2; i += 2)
             {
-                if(data) {
+                if(data != null) {
                     datal ^= stream2word(in data, j);
                     datar ^= stream2word(in data, j);
                 }
@@ -334,7 +334,7 @@ namespace Utility
 
             for(UInt16 i = 0; i < 4; ++i) {
                 for(UInt16 k = 0; k < 256; k += 2) {
-                    if(data) {
+                    if(data != null) {
                         datal ^= stream2word(in data, j);
                         datar ^= stream2word(in data, j);
                     }
