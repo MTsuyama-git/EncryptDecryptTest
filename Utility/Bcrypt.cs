@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Utility
@@ -29,7 +30,7 @@ namespace Utility
             for(int i = 0; i < BCRYPT_WORDS; ++i) 
                 cdata[i] = Blowfish.stream2word(ciphertext, ref j);
             int sizeofCdata = System.Runtime.InteropServices.Marshal.SizeOf(
-		    cdata.GetType().GetElementType())*cdata.Length;
+		cdata.GetType().GetElementType())*cdata.Length;
             for(int i = 0; i < 64; ++i)
                 state.enc(cdata, (UInt16)(sizeofCdata/sizeof(UInt64)));
             for(int i = 0; i < BCRYPT_WORDS; ++i) {
@@ -42,7 +43,7 @@ namespace Utility
             return result;
         }
 
-        public static int pbkdf(string password, byte[] salt, out byte[] key, int rounds)
+        public static int pbkdf(string password, byte[] salt, ref byte[] key, int rounds)
         {
             byte[]  sha2salt  = new byte[SHA512_DIGEST_LENGTH];
             byte[]  output    = new byte[BCRYPT_HASHSIZE];
@@ -62,33 +63,34 @@ namespace Utility
             Buffer.BlockCopy(salt, 0, countsalt, 0, typeSize * salt.Length);
             
 	    SHA512 shaM = new SHA512Managed();
-            byte[]  sha2pass  = shaM.ComputeHash(password);
+            byte[]  sha2pass  = shaM.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
 	    int keylen = key.Length;
 	    for (int count = 1; keylen > 0; count++) {
-		countsalt[salt.Length + 0] = (count >> 24) & 0xff;
-		countsalt[salt.Length + 1] = (count >> 16) & 0xff;
-		countsalt[salt.Length + 2] = (count >> 8) & 0xff;
-		countsalt[salt.Length + 3] = count & 0xff;
+		countsalt[salt.Length + 0] = (byte)((count >> 24) & 0xff);
+		countsalt[salt.Length + 1] = (byte)((count >> 16) & 0xff);
+		countsalt[salt.Length + 2] = (byte)((count >> 8) & 0xff);
+		countsalt[salt.Length + 3] = (byte)(count & 0xff);
 		sha2salt = shaM.ComputeHash(countsalt);
-		tmpoutput = hash(sha2pass, sha2salt);
+		tmpoutput = hash(ref sha2pass, ref sha2salt);
 
 		Buffer.BlockCopy(tmpoutput, 0, output, 0, System.Runtime.InteropServices.Marshal.SizeOf(output.GetType().GetElementType()) * output.Length);
 		for(int i = 1; i < rounds; ++i) {
-		    sha2salt = shaM.ComputeHash(tmpout);
-		    tmpoutput = hash(sha2pass, sha2salt);
-		    for (j = 0; j < output.Length; j++)
+		    sha2salt = shaM.ComputeHash(tmpoutput);
+		    tmpoutput = hash(ref sha2pass, ref sha2salt);
+		    for (int j = 0; j < output.Length; j++)
 			output[j] ^= tmpoutput[j];
 		}
 		
-		amt = Math.min(amt, keylen);
+		amt = Math.Min(amt, keylen);
 		for(int i = 0; i < amt; ++i) {
-		    UInt64 dest = i * stride + (count - 1);
+		    int dest = (i * stride) + (count - 1);
 		    if(dest >= key.Length)
 			break;
 		    key[dest] = output[i];
 		}
 		keylen -= 1;
 	    }
+	    return 0;
         }
     }
 }

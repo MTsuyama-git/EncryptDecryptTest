@@ -8,11 +8,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Encrypt", "Encrypt\Encrypt.csproj", "{E618DCF2-F3C2-49A7-98B0-6188C2D226C4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{08206477-010A-4ED7-8465-0C09534C23CB}"
-	ProjectSection(SolutionItems) = preProject
-		ConsumableData.cs = ConsumableData.cs
-	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utility", "Utility\Utility.csproj", "{177045BC-C5CA-4F4F-90F5-6536AE905789}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utility", "Utility\Utility.csproj", "{177045BC-C5CA-4F4F-90F5-6536AE905789}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

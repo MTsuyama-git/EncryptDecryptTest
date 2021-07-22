@@ -8,12 +8,12 @@ namespace Utility
         const int BLF_N = 16;
         const int BLF_MAXKEYLEN = (BLF_N - 2) * 4;
         const int BLF_MAXUTILIZED = (BLF_N + 2) * 4;
-        UInt32[,] S;
+        UInt32[][] S;
         UInt32[] P;
 
         public Blowfish() {
-            S = new UInt32[4,256] {
-                {
+            S = new UInt32[4][] {
+                new UInt32[256]{
                     0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
                     0xb8e1afed, 0x6a267e96, 0xba7c9045, 0xf12c7f99,
                     0x24a19947, 0xb3916cf7, 0x0801f2e2, 0x858efc16,
@@ -78,7 +78,7 @@ namespace Utility
                     0x08ba6fb5, 0x571be91f, 0xf296ec6b, 0x2a0dd915,
                     0xb6636521, 0xe7b9f9b6, 0xff34052e, 0xc5855664,
                     0x53b02d5d, 0xa99f8fa1, 0x08ba4799, 0x6e85076a},
-		{
+        new UInt32[256]{
                     0x4b7a70e9, 0xb5b32944, 0xdb75092e, 0xc4192623,
                     0xad6ea6b0, 0x49a7df7d, 0x9cee60b8, 0x8fedb266,
                     0xecaa8c71, 0x699a17ff, 0x5664526c, 0xc2b19ee1,
@@ -143,7 +143,7 @@ namespace Utility
                     0xdb73dbd3, 0x105588cd, 0x675fda79, 0xe3674340,
                     0xc5c43465, 0x713e38d8, 0x3d28f89e, 0xf16dff20,
                     0x153e21e7, 0x8fb03d4a, 0xe6e39f2b, 0xdb83adf7},
-		{
+        new UInt32[256]{
                     0xe93d5a68, 0x948140f7, 0xf64c261c, 0x94692934,
                     0x411520f7, 0x7602d4f7, 0xbcf46b2e, 0xd4a20068,
                     0xd4082471, 0x3320f46a, 0x43b7d4b7, 0x500061af,
@@ -208,7 +208,7 @@ namespace Utility
                     0x1e50ef5e, 0xb161e6f8, 0xa28514d9, 0x6c51133c,
                     0x6fd5c7e7, 0x56e14ec4, 0x362abfce, 0xddc6c837,
                     0xd79a3234, 0x92638212, 0x670efa8e, 0x406000e0},
-		{
+        new UInt32[256]{
                     0x3a39ce37, 0xd3faf5cf, 0xabc27737, 0x5ac52d1b,
                     0x5cb0679e, 0x4fa33742, 0xd3822740, 0x99bc9bbe,
                     0xd5118e9d, 0xbf0f7315, 0xd62d1c7e, 0xc700c47b,
@@ -323,10 +323,10 @@ namespace Utility
             for(UInt16 i = 0; i < BLF_N + 2; i += 2)
             {
                 if(data != null) {
-                    datal ^= stream2word(in data, j);
-                    datar ^= stream2word(in data, j);
+                    datal ^= stream2word(in data, ref j);
+                    datar ^= stream2word(in data, ref j);
                 }
-                encipher(datal, datar);
+                encipher(ref datal, ref datar);
                 
                 this.P[i] = datal;
                 this.P[i+1] = datar;
@@ -335,10 +335,10 @@ namespace Utility
             for(UInt16 i = 0; i < 4; ++i) {
                 for(UInt16 k = 0; k < 256; k += 2) {
                     if(data != null) {
-                        datal ^= stream2word(in data, j);
-                        datar ^= stream2word(in data, j);
+                        datal ^= stream2word(in data, ref j);
+                        datar ^= stream2word(in data, ref j);
                     }
-                    encipher(datal, datar);
+                    encipher(ref datal, ref datar);
                     this.S[i][k] = datal;
                     this.S[i][k+1] = datar;
                 }
@@ -351,7 +351,7 @@ namespace Utility
         }
 
         public static void RND(in UInt32[] s, in UInt32[] p, ref UInt32 i, in UInt32 j, in UInt32 n) 
-        { 
+        {
             i ^= (F(s, j) ^ p[n]); 
         }
 
@@ -363,13 +363,13 @@ namespace Utility
             Xl = xl;
             Xr = xr;
             
-            Xl ^= p[0];
-            for(UInt8 i = 1; i <= 16; ++i) {
+            Xl ^= P[0];
+            for(UInt32 i = 1; i <= 16; ++i) {
                 if((i % 2) == 1) {
-                    RND(in S[0], in P, ref Xr, ref Xl, in i);
+                    RND(in S[0], in P, ref Xr, Xl, in i);
                 }
                 else {
-                    RND(in S[0], in P, ref Xl, ref Xr, in i);
+                    RND(in S[0], in P, ref Xl, Xr, in i);
                 }
             }
             xl = Xr ^ P[17];
@@ -380,7 +380,7 @@ namespace Utility
         {
             for(UInt16 i = 0; i < blocks; ++i)
             {
-                encipher(data, ref data[2*i], ref data[2*i+1]);
+                encipher(ref data[2*i], ref data[2*i+1]);
             }
         }
     }
