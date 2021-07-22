@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Decrypt": {
+      "commandName": "Project",
+      "commandLineArgs": "sample.aes sample.txt $(SolutionDir)data1\\id_rsa"
+    }
+  }
+}
