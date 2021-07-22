@@ -1,7 +1,9 @@
 .PHONY: clean encrypt decrypt
 
+DOTNET_CLI_HOME := $(HOME)/.dotnet
+
 ifeq ($(ENV),docker)
-DOCKER_CMD  :=  docker run --rm --user 1000 -v $(PWD):$(PWD) -w $(PWD) dotnet:v1.0
+DOCKER_CMD  :=  docker run --rm --user 1000 -e DOTNET_CLI_HOME=$(DOTNET_CLI_HOME) -v $(HOME):$(HOME) -v $(PWD):$(PWD) -w $(PWD) dotnet:v1.0
 endif
 
 LIB_RELEASE_UTILITY	:=	Utility/bin/Release/net5.0/Utility.dll
