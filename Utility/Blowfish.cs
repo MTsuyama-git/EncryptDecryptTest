@@ -345,12 +345,12 @@ namespace Utility
             }
         }
 
-        private static UInt32 F(UInt32[] s, UInt32 x) 
+        private static UInt32 F(UInt32[][] s, UInt32 x) 
         {
-            return (s[(x >> 24) & 0xFF] + s[0x100 + ((x>>16)&0xFF)]) ^ s[0x200 + ((x >> 8)&0xFF)] + s[0x300 + (x & 0xFF)];
+            return (s[0][(x >> 24) & 0xFF] + s[1][((x>>16)&0xFF)]) ^ s[2][((x >> 8)&0xFF)] + s[3][(x & 0xFF)];
         }
 
-        public static void RND(in UInt32[] s, in UInt32[] p, ref UInt32 i, in UInt32 j, in UInt32 n) 
+        public static void RND(in UInt32[][] s, in UInt32[] p, ref UInt32 i, in UInt32 j, in UInt32 n) 
         {
             i ^= (F(s, j) ^ p[n]); 
         }
@@ -366,10 +366,10 @@ namespace Utility
             Xl ^= P[0];
             for(UInt32 i = 1; i <= 16; ++i) {
                 if((i % 2) == 1) {
-                    RND(in S[0], in P, ref Xr, Xl, in i);
+                    RND(in S, in P, ref Xr, Xl, in i);
                 }
                 else {
-                    RND(in S[0], in P, ref Xl, Xr, in i);
+                    RND(in S, in P, ref Xl, Xr, in i);
                 }
             }
             xl = Xr ^ P[17];
