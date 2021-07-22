@@ -73,10 +73,14 @@ namespace Decrypt
                     Console.WriteLine("Salt:" + salt);
                     Console.WriteLine("Round:" + round);
 		    string passphrase = "testtest";
+		    var sw = new System.Diagnostics.Stopwatch(); // 
+		    sw.Restart();				 // 
 		    if(Bcrypt.pbkdf(passphrase, System.Text.Encoding.UTF8.GetBytes(salt), ref key, round) < 0) {
 			throw new Exception("Invalid format@pbkdf");
 		    }
 		    else {
+			sw.Stop();	// 
+			Console.WriteLine($"PBKDF elapsed: {sw.ElapsedMilliseconds} ms"); // 
 			ConsumableData cdkey = new(key);
 			Console.Write("key:");
 			cdkey.dump();

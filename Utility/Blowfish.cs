@@ -330,8 +330,6 @@ namespace Utility
                 this.P[i+1] = datar;
             }
 
-	    var sw = new System.Diagnostics.Stopwatch(); // 
-	    sw.Restart();				 // 
             for(UInt16 i = 0; i < 4; ++i) {
                 for(UInt16 k = 0; k < 256; k += 2) {
                     if(data != null) {
@@ -343,8 +341,6 @@ namespace Utility
                     this.S[i*0x100 + k+1] = datar;
                 }
             }
-	    sw.Stop();	// 
-	    Console.WriteLine($"encipher2 elapsed: {sw.ElapsedTicks} tick"); // 
         }
 
         // // private static UInt32 F(in UInt32[][] s, in UInt32 x) 
