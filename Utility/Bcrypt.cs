@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Utility
 {
-    class Bcrypt
+    public class Bcrypt
     {
         static readonly int SHA512_DIGEST_LENGTH = 64;
         static readonly int BCRYPT_WORDS = 8;

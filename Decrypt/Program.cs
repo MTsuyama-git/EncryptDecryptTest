@@ -105,13 +105,25 @@ namespace Decrypt
                 if( encryptedLen < blockSize || (encryptedLen % blockSize) != 0) {
                     throw new Exception("Invalid Key Format");
                 }
+		byte[] key = new byte[keyLen + ivLen];
+		Array.Fill<byte>(key, 1);
                 if(kdf_name == "bcrypt") {
                     string salt = kdf.StrData;
                     int round = kdf.U32;
                     Console.WriteLine("Salt:" + salt);
                     Console.WriteLine("Round:" + round);
+		    string passphrase = "testtest";
+		    if(Bcrypt.pbkdf(passphrase, System.Text.Encoding.UTF8.GetBytes(salt), ref key, round) < 0) {
+			throw new Exception("Invalid format@pbkdf");
+		    }
+		    else {
+			ConsumableData cdkey = new(key);
+			Console.Write("key:");
+			cdkey.dump();
+		    }
+
                     if(1 <= cipher.cipherMode && cipher.cipherMode <= 5) {
-                        
+			// todo
                     }
                 }
             }
