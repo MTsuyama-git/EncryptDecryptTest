@@ -332,6 +332,8 @@ namespace Utility
                 this.P[i+1] = datar;
             }
 
+	    // var sw = new System.Diagnostics.Stopwatch(); // 
+	    // sw.Restart();				 // 
             for(UInt16 i = 0; i < 4; ++i) {
                 for(UInt16 k = 0; k < 256; k += 2) {
                     if(data != null) {
@@ -343,17 +345,19 @@ namespace Utility
                     this.S[i][k+1] = datar;
                 }
             }
+	    // sw.Stop();	// 
+	    // Console.WriteLine($"encipher2 elapsed: {sw.ElapsedTicks} tick"); // 
         }
 
-        private static UInt32 F(UInt32[][] s, UInt32 x) 
-        {
-            return (s[0][(x >> 24) & 0xFF] + s[1][((x>>16)&0xFF)]) ^ s[2][((x >> 8)&0xFF)] + s[3][(x & 0xFF)];
-        }
+        // // private static UInt32 F(in UInt32[][] s, in UInt32 x) 
+        // // {	    
+        // //     return (s[0][(x >> 24) & 0xFF] + s[1][((x>>16)&0xFF)]) ^ s[2][((x >> 8)&0xFF)] + s[3][(x & 0xFF)];
+        // // }
 
-        public static void RND(in UInt32[][] s, in UInt32[] p, ref UInt32 i, in UInt32 j, in UInt32 n) 
-        {
-            i ^= (F(s, j) ^ p[n]); 
-        }
+        // public static void RND(in UInt32[][] s, in UInt32[] p, ref UInt32 i, in UInt32 j, in UInt32 n) 
+        // {
+        //     // i ^= ((s[0][(j >> 24) & 0xFF] + s[1][((j>>16)&0xFF)]) ^ s[2][((j >> 8)&0xFF)] + s[3][(j & 0xFF)]) ^ p[n]); 
+        // }
 
         public void encipher(ref UInt32 xl, ref UInt32 xr) 
         {
@@ -366,10 +370,13 @@ namespace Utility
             Xl ^= P[0];
             for(UInt32 i = 1; i <= 16; ++i) {
                 if((i % 2) == 1) {
-                    RND(in S, in P, ref Xr, Xl, in i);
+                    // RND(in S, in P, ref Xr, Xl, in i);
+	            Xr ^= ((S[0][(Xl >> 24) & 0xFF] + S[1][((Xl>>16)&0xFF)]) ^ S[2][((Xl >> 8)&0xFF)] + S[3][(Xl & 0xFF)]) ^ P[i];
+
                 }
                 else {
-                    RND(in S, in P, ref Xl, Xr, in i);
+	            Xl ^= ((S[0][(Xr >> 24) & 0xFF] + S[1][((Xr>>16)&0xFF)]) ^ S[2][((Xr >> 8)&0xFF)] + S[3][(Xr & 0xFF)]) ^ P[i];
+                    // RND(in S, in P, ref Xl, Xr, in i);
                 }
             }
             xl = Xr ^ P[17];

@@ -81,7 +81,6 @@ namespace Decrypt
 			Console.Write("key:");
 			cdkey.dump();
 		    }
-
                     if(1 <= cipher.cipherMode && cipher.cipherMode <= 5) {
 			// todo
                     }
