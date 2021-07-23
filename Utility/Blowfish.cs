@@ -365,11 +365,11 @@ namespace Utility
             for(UInt32 i = 1; i <= 16; ++i) {
                 if((i % 2) == 1) {
                     // RND(in S, in P, ref Xr, Xl, in i);
-	            Xr ^= ((S[(Xl >> 24) & 0xFF] + S[0x100 + ((Xl>>16)&0xFF)]) ^ S[0x200 + ((Xl >> 8)&0xFF)] + S[0x300 + (Xl & 0xFF)]) ^ P[i];
+	            Xr ^= ((((S[(Xl >> 24) & 0xFF] + S[0x100 + ((Xl>>16)&0xFF)]) ^ S[0x200 + ((Xl >> 8)&0xFF)]) + S[0x300 + (Xl & 0xFF)]) ^ P[i]);
 
                 }
                 else {
-	            Xl ^= ((S[(Xr >> 24) & 0xFF] + S[0x100 + ((Xr>>16)&0xFF)]) ^ S[0x200 + ((Xr >> 8)&0xFF)] + S[0x300 + (Xr & 0xFF)]) ^ P[i];
+	            Xl ^= ((((S[(Xr >> 24) & 0xFF] + S[0x100 + ((Xr>>16)&0xFF)]) ^ S[0x200 + ((Xr >> 8)&0xFF)]) + S[0x300 + (Xr & 0xFF)]) ^ P[i]);
                     // RND(in S, in P, ref Xl, Xr, in i);
                 }
             }

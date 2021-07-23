@@ -10,12 +10,19 @@ namespace Utility
         static readonly int BCRYPT_WORDS = 8;
         static readonly int BCRYPT_HASHSIZE = BCRYPT_WORDS * 4;
 
+        static void dump<T>(T[] arr) {
+            foreach(T b in arr) {
+		Console.Write(string.Format("{0,2:X2}", b) + " ");
+	    }
+	    Console.WriteLine();
+	}
+
         static byte[] hash(ref byte[] pass, ref byte[] salt)
         {
             Blowfish state = new ();
             string ciphertext = "OxychromaticBlowfishSwatDynamite";
             UInt32[] cdata = new UInt32[BCRYPT_WORDS];
-            byte[] result = new byte[pass.Length];
+            byte[] result = new byte[BCRYPT_HASHSIZE];
             UInt16 j;
             int shalen = SHA512_DIGEST_LENGTH;
 
@@ -29,10 +36,14 @@ namespace Utility
 
             for(int i = 0; i < BCRYPT_WORDS; ++i) 
                 cdata[i] = Blowfish.stream2word(ciphertext, ref j);
+            Console.Write("cdata0:");
+            dump(cdata);
             int sizeofCdata = System.Runtime.InteropServices.Marshal.SizeOf(
 		cdata.GetType().GetElementType())*cdata.Length;
             for(int i = 0; i < 64; ++i)
                 state.enc(cdata, (UInt16)(sizeofCdata/sizeof(UInt64)));
+            Console.Write("cdata1:");
+            dump(cdata);
             for(int i = 0; i < BCRYPT_WORDS; ++i) {
                 result[4 * i + 3] = (byte)((cdata[i] >> 24) & 0xFF);
                 result[4 * i + 2] = (byte)((cdata[i] >> 16) & 0xFF);
