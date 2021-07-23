@@ -8,9 +8,29 @@ namespace Utility {
         public readonly string name;
         public readonly int blockSize;
         public readonly int keyLen;
-        public readonly int ivLen;
+        private readonly int _ivLen;
         public readonly int authLen;
         public readonly int cipherMode;
+
+       public int SecLen {
+           get {
+               return (name == "3des-cbc") ? 14 : keyLen;
+           }
+       }
+
+       public int ivLen {
+           get {
+               return (_ivLen != 0 || cipherMode == 6) ? _ivLen : blockSize;
+           }
+       }
+
+       public bool isCBC {
+           get {
+               return (cipherMode == (int)CipherMode.CBC);
+           }
+       }
+
+       
 
         // 0: none, 6: CHACHA20-poly, 7: CTR, 1-5 CipherMode
         public static readonly Dictionary<string, SshCipher> ciphers = new () {
@@ -34,7 +54,7 @@ namespace Utility {
             this.name = name;
             this.blockSize = blockSize;
             this.keyLen = keyLen;
-            this.ivLen = ivLen;
+            this._ivLen = ivLen;
             this.authLen = authLen;
             this.cipherMode = cipherMode;
         }

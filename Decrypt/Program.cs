@@ -51,36 +51,47 @@ namespace Decrypt
                 Console.WriteLine(magic);
                 Console.WriteLine(cipher_name);
                 Console.WriteLine(kdf_name);
-                kdf.dump();
+                // kdf.dump();
                 Console.WriteLine("kdf:" + kdf.Size);
                 Console.WriteLine("nkeys:" + nkeys);
                 Console.WriteLine("encryptedLen:" + encryptedLen);
                 Console.WriteLine("pubKey:" + pubkey.Size);
-                pubkey.dump();
+                Console.WriteLine("pubKeyType:" + pubkey.StrData);
+                byte[] rsa_e = pubkey.trimmedRawData;
+                byte[] rsa_n = pubkey.trimmedRawData;
+                Console.Write("RSA_E:");
+                new ConsumableData(rsa_e).dump();
+                Console.Write("RSA_N:");
+                new ConsumableData(rsa_n).dump();
+                // pubkey.dump();
                 SshCipher cipher = SshCipher.ciphers[cipher_name];
                 int keyLen = cipher.keyLen;
                 int ivLen  = cipher.ivLen;
                 int authLen = cipher.authLen;
                 int blockSize = cipher.blockSize;
+                Console.WriteLine("keyLen:" + keyLen);
+                Console.WriteLine("ivLen:" + ivLen);
+                Console.WriteLine("authLen:" + authLen);
+                Console.WriteLine("blockSize:" + blockSize);
                 if( encryptedLen < blockSize || (encryptedLen % blockSize) != 0) {
                     throw new Exception("Invalid Key Format");
                 }
 		byte[] key = new byte[keyLen + ivLen];
 		Array.Fill<byte>(key, 1);
                 if(kdf_name == "bcrypt") {
-                    string salt = kdf.StrData;
+                    Console.Write("kdf:"); kdf.dump();
+                    byte[] salt = kdf.rawData;
                     int round = kdf.U32;
-                    Console.WriteLine("Salt:" + salt);
-                    Console.WriteLine("Round:" + round);
 		    string passphrase = "testtest";
-		    var sw = new System.Diagnostics.Stopwatch(); // 
-		    sw.Restart();				 // 
-		    if(Bcrypt.pbkdf(passphrase, System.Text.Encoding.UTF8.GetBytes(salt), ref key, round) < 0) {
+                    Console.Write("salt:"); new ConsumableData(salt).dump();
+		    // var sw = new System.Diagnostics.Stopwatch(); // 
+		    // sw.Restart();				 // 
+		    if(Bcrypt.pbkdf(passphrase, salt, ref key, round) < 0) {
 			throw new Exception("Invalid format@pbkdf");
 		    }
 		    else {
-			sw.Stop();	// 
-			Console.WriteLine($"PBKDF elapsed: {sw.ElapsedMilliseconds} ms"); // 
+			// sw.Stop();	// 
+			// Console.WriteLine($"PBKDF elapsed: {sw.ElapsedMilliseconds} ms"); // 
 			ConsumableData cdkey = new(key);
 			Console.Write("key:");
 			cdkey.dump();

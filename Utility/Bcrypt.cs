@@ -15,11 +15,11 @@ namespace Utility
             Blowfish state = new ();
             string ciphertext = "OxychromaticBlowfishSwatDynamite";
             UInt32[] cdata = new UInt32[BCRYPT_WORDS];
-            byte[] result = new byte[salt.Length];
+            byte[] result = new byte[pass.Length];
             UInt16 j;
             int shalen = SHA512_DIGEST_LENGTH;
 
-            state.expandstate(salt, pass);
+            state.expandstate(pass, salt);
             for(int i = 0; i < 64; ++i) {
                 state.expandstate(salt);
                 state.expandstate(pass);
@@ -49,7 +49,7 @@ namespace Utility
             byte[]  output    = new byte[BCRYPT_HASHSIZE];
             byte[]  tmpoutput = new byte[BCRYPT_HASHSIZE];
             byte[]  countsalt = new byte[salt.Length + 4];
-            int amt, stride;
+            int amt, stride, i;
 
             Array.Fill<byte>(countsalt, 1);
 
@@ -71,10 +71,15 @@ namespace Utility
 		countsalt[salt.Length + 2] = (byte)((count >> 8) & 0xff);
 		countsalt[salt.Length + 3] = (byte)(count & 0xff);
 		sha2salt = shaM.ComputeHash(countsalt);
+                Console.Write(count + ": countsalt:");
+                new ConsumableData(countsalt).dump();
+                Console.Write(count + ": sha2salt:");
+                new ConsumableData(sha2salt).dump();
 		tmpoutput = hash(ref sha2pass, ref sha2salt);
-
+                Console.Write(count + ": tmpoutput:");
+                new ConsumableData(tmpoutput).dump();
 		Buffer.BlockCopy(tmpoutput, 0, output, 0, System.Runtime.InteropServices.Marshal.SizeOf(output.GetType().GetElementType()) * output.Length);
-		for(int i = 1; i < rounds; ++i) {
+		for(i = 1; i < rounds; ++i) {
 		    sha2salt = shaM.ComputeHash(tmpoutput);
 		    tmpoutput = hash(ref sha2pass, ref sha2salt);
 		    for (int j = 0; j < output.Length; j++)
@@ -82,13 +87,13 @@ namespace Utility
 		}
 		
 		amt = Math.Min(amt, keylen);
-		for(int i = 0; i < amt; ++i) {
+		for(i = 0; i < amt; ++i) {
 		    int dest = (i * stride) + (count - 1);
 		    if(dest >= key.Length)
 			break;
 		    key[dest] = output[i];
 		}
-		keylen -= 1;
+		keylen -= i;
 	    }
 	    return 0;
         }

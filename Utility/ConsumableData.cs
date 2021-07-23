@@ -13,6 +13,12 @@ namespace Utility
 	    this.offset = 0;
 	}
 
+        public ConsumableData(string data)
+        {
+            this.data = System.Text.Encoding.UTF8.GetBytes(data);
+            this.offset = 0;
+        }
+
 	public int Size
 	{
 	    get
