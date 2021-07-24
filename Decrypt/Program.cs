@@ -44,9 +44,9 @@ namespace Decrypt
                 // ConsumableData kdf = new(data.StrData);
                 // string kdf = data.StrData;
                 ConsumableData kdf = new(data.rawData);
-                int    nkeys = data.U32;
+                uint    nkeys = data.U32;
                 ConsumableData pubkey = new(data.rawData);
-                int encryptedLen = data.U32;
+                uint encryptedLen = data.U32;
         
                 Console.WriteLine(magic);
                 Console.WriteLine(cipher_name);
@@ -81,12 +81,12 @@ namespace Decrypt
                 if(kdf_name == "bcrypt") {
                     Console.Write("kdf:"); kdf.dump();
                     byte[] salt = kdf.rawData;
-                    int round = kdf.U32;
+                    uint round = kdf.U32;
 		    string passphrase = "testtest";
                     Console.Write("salt:"); new ConsumableData(salt).dump();
 		    // var sw = new System.Diagnostics.Stopwatch(); // 
 		    // sw.Restart();				 // 
-		    if(Bcrypt.pbkdf(passphrase, salt, ref key, round) < 0) {
+		    if(Bcrypt.pbkdf(passphrase, salt, ref key, (int)round) < 0) {
 			throw new Exception("Invalid format@pbkdf");
 		    }
 		    else {
@@ -95,18 +95,26 @@ namespace Decrypt
 			ConsumableData cdkey = new(key);
 			Console.Write("key:");
 			cdkey.dump();
+			
 		    }
-                    if(1 <= cipher.cipherMode && cipher.cipherMode <= 5) {
-			// todo
-                    }
                 }
 
 		if(data.Remain < authLen || data.Remain - authLen < encryptedLen) {
 		    throw new Exception("INVALID format@RemainCheck");
 		}
-		
-		
-
+		byte[] keyBody = Misc.BlockCopy(key, 0, keyLen);
+		byte[] ivBody = Misc.BlockCopy(key, keyLen, ivLen);
+		SshCipherCtx cipherCtx = new(cipher, keyBody, ivBody, false);
+		ConsumableData decrypted = new(cipherCtx.Crypt(0, data.Remains, (int)encryptedLen, 0, authLen));
+		data.Consume((int)(encryptedLen + authLen));
+		if(data.Remain != 0) {
+		    throw new Exception("INVALID FORMAT of data");
+		}
+		uint check1 = decrypted.U32;
+		uint check2 = decrypted.U32;
+		if(check1 != check2) {
+		    throw new Exception("Wrong Pass pharase");
+		}
             }
             else {
                 throw new Exception("Invalid SSH key type");

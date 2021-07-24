@@ -27,11 +27,11 @@ namespace Utility
 	    }
 	}
 
-	public int U32
+	public UInt32 U32
 	{
 	    get
 	    {
-		return DataLengthU32;
+		return (UInt32)DataLengthU32;
 	    }
 	}
 
@@ -39,7 +39,7 @@ namespace Utility
 	{
 	    get
 	    {
-		int length = (data[offset + 0] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | (data[offset + 3]);
+		int length = (int)ByteConverter.convertToU32(in data, Endian.BIG, offset);
 		Consume(4);
 		return length;
 	    }
@@ -81,11 +81,7 @@ namespace Utility
 		    ptr++;
 		    length--;
                 }
-		byte[] result = new byte[length];
-		int typeSize = System.Runtime.InteropServices.Marshal.SizeOf(
-		    rawArray.GetType().GetElementType());
-		Buffer.BlockCopy(rawArray, ptr, result, 0, result.Length * typeSize);
-		return result;
+		return Misc.BlockCopy(rawArray, ptr, length);
 	    }
         }
 
@@ -129,6 +125,13 @@ namespace Utility
 		    trueIdx = this.data.Length - 1;
 		}
 		return this.data[trueIdx];
+	    }
+	}
+
+	public byte[] Remains
+	{
+	    get {
+		return SubArray(this.data.Length);
 	    }
 	}
 

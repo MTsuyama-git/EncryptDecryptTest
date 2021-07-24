@@ -24,9 +24,9 @@ endif
 UTILITY_SOURCE:= $(wildcard Utility/*.cs)
 
 encrypt: $(ENCRYPT_RELEASE_TARGET)
-	$(DOCKER_CMD) ./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data/id_rsa.pub
+	$(DOCKER_CMD) ./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa.pub
 decrypt: $(DECRYPT_RELEASE_TARGET)
-	$(DOCKER_CMD) ./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data1/id_rsa
+	$(DOCKER_CMD) ./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa
 release: $(ENCRYPT_RELEASE_TARGET)
 debug: $(ENCRYPT_DEBUG_TARGET)
 pem: data/id_rsa.pub
