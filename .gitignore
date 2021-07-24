@@ -2,4 +2,4 @@ bin/
 .vs/
 obj/
 *~
-data/
+core
