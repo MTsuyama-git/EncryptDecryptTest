@@ -57,13 +57,14 @@ namespace Decrypt
                 Console.WriteLine("encryptedLen:" + encryptedLen);
                 Console.WriteLine("pubKey:" + pubkey.Size);
                 Console.WriteLine("pubKeyType:" + pubkey.StrData);
+		Console.Write("pubkey:");
+                pubkey.dump();
                 byte[] rsa_e = pubkey.trimmedRawData;
                 byte[] rsa_n = pubkey.trimmedRawData;
                 Console.Write("RSA_E:");
                 new ConsumableData(rsa_e).dump();
                 Console.Write("RSA_N:");
                 new ConsumableData(rsa_n).dump();
-                // pubkey.dump();
                 SshCipher cipher = SshCipher.ciphers[cipher_name];
                 int keyLen = cipher.keyLen;
                 int ivLen  = cipher.ivLen;
@@ -104,8 +105,12 @@ namespace Decrypt
 		}
 		byte[] keyBody = Misc.BlockCopy(key, 0, keyLen);
 		byte[] ivBody = Misc.BlockCopy(key, keyLen, ivLen);
+		Console.Write("keyBody:"); new ConsumableData(keyBody).dump();
+		Console.Write("ivBody:"); new ConsumableData(ivBody).dump();
 		SshCipherCtx cipherCtx = new(cipher, keyBody, ivBody, false);
 		ConsumableData decrypted = new(cipherCtx.Crypt(0, data.Remains, (int)encryptedLen, 0, authLen));
+		Console.Write("Decrypted:");
+		decrypted.dump();
 		data.Consume((int)(encryptedLen + authLen));
 		if(data.Remain != 0) {
 		    throw new Exception("INVALID FORMAT of data");
