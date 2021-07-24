@@ -36,14 +36,10 @@ namespace Utility
 
             for(int i = 0; i < BCRYPT_WORDS; ++i) 
                 cdata[i] = Blowfish.stream2word(ciphertext, ref j);
-            Console.Write("cdata0:");
-            dump(cdata);
             int sizeofCdata = System.Runtime.InteropServices.Marshal.SizeOf(
 		cdata.GetType().GetElementType())*cdata.Length;
             for(int i = 0; i < 64; ++i)
                 state.enc(cdata, (UInt16)(sizeofCdata/sizeof(UInt64)));
-            Console.Write("cdata1:");
-            dump(cdata);
             for(int i = 0; i < BCRYPT_WORDS; ++i) {
                 result[4 * i + 3] = (byte)((cdata[i] >> 24) & 0xFF);
                 result[4 * i + 2] = (byte)((cdata[i] >> 16) & 0xFF);
@@ -82,13 +78,7 @@ namespace Utility
 		countsalt[salt.Length + 2] = (byte)((count >> 8) & 0xff);
 		countsalt[salt.Length + 3] = (byte)(count & 0xff);
 		sha2salt = shaM.ComputeHash(countsalt);
-                Console.Write(count + ": countsalt:");
-                new ConsumableData(countsalt).dump();
-                Console.Write(count + ": sha2salt:");
-                new ConsumableData(sha2salt).dump();
 		tmpoutput = hash(ref sha2pass, ref sha2salt);
-                Console.Write(count + ": tmpoutput:");
-                new ConsumableData(tmpoutput).dump();
 		Buffer.BlockCopy(tmpoutput, 0, output, 0, System.Runtime.InteropServices.Marshal.SizeOf(output.GetType().GetElementType()) * output.Length);
 		for(i = 1; i < rounds; ++i) {
 		    sha2salt = shaM.ComputeHash(tmpoutput);
