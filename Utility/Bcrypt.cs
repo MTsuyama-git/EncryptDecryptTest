@@ -37,7 +37,7 @@ namespace Utility
             for(int i = 0; i < BCRYPT_WORDS; ++i) 
                 cdata[i] = Blowfish.stream2word(ciphertext, ref j);
             int sizeofCdata = System.Runtime.InteropServices.Marshal.SizeOf(
-		cdata.GetType().GetElementType())*cdata.Length;
+                cdata.GetType().GetElementType())*cdata.Length;
             for(int i = 0; i < 64; ++i)
                 state.enc(cdata, (UInt16)(sizeofCdata/sizeof(UInt64)));
             for(int i = 0; i < BCRYPT_WORDS; ++i) {
