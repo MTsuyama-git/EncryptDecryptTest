@@ -6,7 +6,18 @@ namespace Utility {
 	LITTLE
     }
 
-    class ByteConverter {
+    public class ByteConverter {
+	public static byte[] trim(in byte[] data) {
+	    int ptr = 0;
+	    int length = data.Length;
+	    while(data[ptr] == 0x0 && length > 0) {
+		ptr++;
+		length--;
+	    }
+	    return Misc.BlockCopy(in data, in ptr, in length);
+	}
+
+	
 	public static UInt16 convertToU16(in byte[] data, in Endian endian=Endian.BIG, in int offset = 0) {
 	    UInt16 result = (
 		(endian == Endian.BIG) 
