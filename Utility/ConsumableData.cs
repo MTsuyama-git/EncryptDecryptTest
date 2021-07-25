@@ -35,6 +35,16 @@ namespace Utility
 	    }
 	}
 
+	public byte U8
+	{
+	    get
+	    {
+            byte result = data[offset];
+            Consume(1);
+            return result;
+	    }
+	}
+
 	private int DataLengthU32
 	{
 	    get
@@ -135,10 +145,10 @@ namespace Utility
 	    }
 	}
 
-	public byte[] SubArray(int num)
+	public byte[] SubArray(int num = -1)
 	{
 	    int tail = offset + num;
-	    if (tail > this.data.Length)
+	    if (num < 0 || tail > this.data.Length)
 	    {
 		tail = this.data.Length;
 	    }
