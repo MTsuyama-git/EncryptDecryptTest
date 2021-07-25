@@ -43,33 +43,16 @@ namespace Decrypt
 
         public RSAParameters deserializeKey(ConsumableData buf) {
             string tname = buf.StrData;
-            Console.WriteLine("tname:" + tname);
             ConsumableData rsa_n = new(buf.trimmedRawData);
             // sshkey_from_blob_internal
             ConsumableData rsa_e = new(buf.trimmedRawData);
-            Console.Write("rsa_n:");
-            rsa_n.dump();
-            Console.Write("rsa_e:");
-            rsa_e.dump();
             ConsumableData rsa_d = new(buf.trimmedRawData);
-            Console.Write("rsa_d:");
-            rsa_d.dump();
             ConsumableData rsa_iqmp = new(buf.trimmedRawData);
-            Console.Write("rsa_iqmp:");
-            rsa_iqmp.dump();
             ConsumableData rsa_p = new(buf.trimmedRawData);
-            Console.Write("rsa_p:");
-            rsa_p.dump();
             ConsumableData rsa_q = new(buf.trimmedRawData);
-            Console.Write("rsa_q:");
-            rsa_q.dump();
 
             string comment = buf.StrData;
-            Console.WriteLine("Comment:" + comment);
             check_padding(buf);
-            Console.WriteLine("length of rsa_p:"+rsa_p.Size);
-            Console.WriteLine("length of rsa_q:"+rsa_q.Size);
-            Console.WriteLine("length of rsa_d:"+rsa_d.Size);
 
             BigInteger brsa_p = new (1, rsa_p.SubArray());
             BigInteger brsa_q = new (1, rsa_q.SubArray());
@@ -172,43 +155,24 @@ namespace Decrypt
                     ConsumableData pubkey = new(data.rawData);
                     uint encryptedLen = data.U32;
         
-                    Console.WriteLine(magic);
-                    Console.WriteLine(cipher_name);
-                    Console.WriteLine(kdf_name);
                     // kdf.dump();
-                    Console.WriteLine("kdf:" + kdf.Size);
-                    Console.WriteLine("nkeys:" + nkeys);
-                    Console.WriteLine("encryptedLen:" + encryptedLen);
-                    Console.WriteLine("pubKey:" + pubkey.Size);
-                    Console.WriteLine("pubKeyType:" + pubkey.StrData);
-                    Console.Write("pubkey:");
-                    pubkey.dump();
                     byte[] rsa_e = pubkey.trimmedRawData;
                     byte[] rsa_n = pubkey.trimmedRawData;
-                    Console.Write("RSA_E:");
-                    new ConsumableData(rsa_e).dump();
-                    Console.Write("RSA_N:");
-                    new ConsumableData(rsa_n).dump();
                     SshCipher cipher = SshCipher.ciphers[cipher_name];
                     int keyLen = cipher.keyLen;
                     int ivLen  = cipher.ivLen;
                     int authLen = cipher.authLen;
                     int blockSize = cipher.blockSize;
-                    Console.WriteLine("keyLen:" + keyLen);
-                    Console.WriteLine("ivLen:" + ivLen);
-                    Console.WriteLine("authLen:" + authLen);
-                    Console.WriteLine("blockSize:" + blockSize);
+
                     if( encryptedLen < blockSize || (encryptedLen % blockSize) != 0) {
                         throw new Exception("Invalid Key Format");
                     }
                     byte[] key = new byte[keyLen + ivLen];
                     Array.Fill<byte>(key, 1);
                     if(kdf_name == "bcrypt") {
-                        Console.Write("kdf:"); kdf.dump();
                         byte[] salt = kdf.rawData;
                         uint round = kdf.U32;
                         string passphrase = "testtest";
-                        Console.Write("salt:"); new ConsumableData(salt).dump();
                         // var sw = new System.Diagnostics.Stopwatch(); // 
                         // sw.Restart();				 // 
                         if(Bcrypt.pbkdf(passphrase, salt, ref key, (int)round) < 0) {
@@ -218,9 +182,6 @@ namespace Decrypt
                             // sw.Stop();	// 
                             // Console.WriteLine($"PBKDF elapsed: {sw.ElapsedMilliseconds} ms"); // 
                             ConsumableData cdkey = new(key);
-                            Console.Write("key:");
-                            cdkey.dump();
-			
                         }
                     }
 
@@ -229,12 +190,8 @@ namespace Decrypt
                     }
                     byte[] keyBody = Misc.BlockCopy(key, 0, keyLen);
                     byte[] ivBody = Misc.BlockCopy(key, keyLen, ivLen);
-                    Console.Write("keyBody:"); new ConsumableData(keyBody).dump();
-                    Console.Write("ivBody:"); new ConsumableData(ivBody).dump();
                     SshCipherCtx cipherCtx = new(cipher, keyBody, ivBody, false);
                     ConsumableData decrypted = new(cipherCtx.Crypt(0, data.Remains, (int)encryptedLen, 0, authLen));
-                    Console.Write("Decrypted:");
-                    decrypted.dump();
                     data.Consume((int)(encryptedLen + authLen));
                     if(data.Remain != 0) {
                         throw new Exception("INVALID FORMAT of data");

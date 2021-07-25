@@ -485,7 +485,6 @@ namespace Utility {
 
         public AesCtrCtx(in byte[] key, in byte[] iv) {
             _ek = Rijndael.keySetupEnc(4*(AES_MAXROUNDS + 1), in key, key.Length * 8, out _rounds);
-            Console.WriteLine("rounds:"+_rounds);
             ctr = iv;
         }
 
