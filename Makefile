@@ -6,13 +6,17 @@ LIB_DEBUG_UTILITY	:=	Utility/bin/Debug/net5.0/Utility.dll
 ifeq ($(OS),Windows_NT)
 ENCRYPT_RELEASE_TARGET	:=	Encrypt/bin/Release/net5.0/Encrypt.exe
 DECRYPT_RELEASE_TARGET	:=	Decrypt/bin/Release/net5.0/Decrypt.exe
+BIGNUM_RELEASE_TARGET	:=	TestBigNumber/bin/Release/net5.0/TestBigNumber.exe
 ENCRYPT_DEBUG_TARGET	:=	Encrypt/bin/Debug/net5.0/Encrypt.exe
 DECRYPT_DEBUG_TARGET	:=	Decrypt/bin/Debug/net5.0/Decrypt.exe
+BIGNUM_DEBUG_TARGET	:=	TestBigNumber/bin/Debug/net5.0/TestBigNumber.exe
 else
-ENCRYPT_RELEASE_TARGET 	:= Encrypt/bin/Release/net5.0/Encrypt
-DECRYPT_RELEASE_TARGET 	:= Decrypt/bin/Release/net5.0/Decrypt
-ENCRYPT_DEBUG_TARGET := Encrypt/bin/Debug/net5.0/Encrypt
-DECRYPT_DEBUG_TARGET := Decrypt/bin/Debug/net5.0/Decrypt
+ENCRYPT_RELEASE_TARGET 	:=	Encrypt/bin/Release/net5.0/Encrypt
+DECRYPT_RELEASE_TARGET 	:=	Decrypt/bin/Release/net5.0/Decrypt
+BIGNUM_RELEASE_TARGET	:=	TestBigNumber/bin/Release/net5.0/TestBigNumber
+ENCRYPT_DEBUG_TARGET 	:=	Encrypt/bin/Debug/net5.0/Encrypt
+DECRYPT_DEBUG_TARGET 	:=	Decrypt/bin/Debug/net5.0/Decrypt
+BIGNUM_DEBUG_TARGET	:=	TestBigNumber/bin/Debug/net5.0/TestBigNumber
 endif
 
 UTILITY_SOURCE:= $(wildcard Utility/*.cs)
@@ -23,6 +27,8 @@ decrypt: $(DECRYPT_RELEASE_TARGET)
 	./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa
 decryptrsa: $(DECRYPT_RELEASE_TARGET)
 	./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_rsa/id_rsa
+bignum: $(BIGNUM_RELEASE_TARGET)
+	./$(BIGNUM_RELEASE_TARGET)
 release: $(ENCRYPT_RELEASE_TARGET)
 debug: $(ENCRYPT_DEBUG_TARGET)
 pem: data/id_rsa.pub
@@ -34,6 +40,10 @@ $(ENCRYPT_DEBUG_TARGET): Encrypt/Program.cs $(UTILITY_SOURCE)
 $(DECRYPT_RELEASE_TARGET): Decrypt/Program.cs $(UTILITY_SOURCE)
 	dotnet build -p:Configuration=Release -p:Platform="Any CPU"
 $(DECRYPT_DEBUG_TARGET): Decrypt/Program.cs $(UTILITY_SOURCE)
+	dotnet build -p:Configuration=Debug -p:Platform="Any CPU"
+$(BIGNUM_RELEASE_TARGET): TestBigNumber/Program.cs $(UTILITY_SOURCE)
+	dotnet build -p:Configuration=Release -p:Platform="Any CPU"
+$(BIGNUM_DEBUG_TARGET): TestBigNumber/Program.cs $(UTILITY_SOURCE)
 	dotnet build -p:Configuration=Debug -p:Platform="Any CPU"
 $(LIB_RELEASE_UTILITY): $(UTILITY_SOURCE)
 	dotnet build -p:Configuration=Release -p:Platform="Any CPU"
