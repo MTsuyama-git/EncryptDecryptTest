@@ -63,6 +63,13 @@ namespace Utility
 	    return result;
 	}
 
+	public byte[] readByte(int length)
+	{
+	    byte[] result = SubArray(length);
+	    Consume(length);
+	    return result;
+	}
+
 	public string StrData
 	{
 	    get

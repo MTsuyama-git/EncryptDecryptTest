@@ -148,7 +148,7 @@ namespace Decrypt
         }
 
 
-
+        private readonly char[] del = { '\n' };
         public void readSSHPrivateKey(string contents) 
             {
                 const string RsaPrivateKeyHeader = @"-----BEGIN RSA PRIVATE KEY-----";
@@ -159,6 +159,24 @@ namespace Decrypt
                 if(contents.Substring(0, RsaPrivateKeyHeader.Length) == RsaPrivateKeyHeader) {
                     // TODO: old style
                     Console.WriteLine(RsaPrivateKeyHeader);
+		    contents = contents.Replace("\r", String.Empty);
+		    string[] contentlines = contents.Split(del, StringSplitOptions.RemoveEmptyEntries);
+		    contents = String.Empty;
+		    foreach(string line in contentlines) {
+			if(line.Substring(0, 10) == "Proc-Type:" || line.Substring(0, 9) == "DEK-Info:")
+			    continue;
+			contents += line;
+		    }
+		    contents = contents.Replace(RsaPrivateKeyHeader, String.Empty).Replace(RsaPrivateKeyFooter, String.Empty).Replace("\n", String.Empty);
+		    Console.WriteLine(contents);
+		    byte[] encrypted_data = Convert.FromBase64String(contents);
+		    ConsumableData data = new(encrypted_data);
+		    data.dump();
+		    var head = data.readByte(8);
+		    var salt = data.readByte(8);
+		    new ConsumableData(head).dump();
+		    new ConsumableData(salt).dump();
+
                 }
                 else if(contents.Substring(0, OpenSSHPrivateKeyHeader.Length) == OpenSSHPrivateKeyHeader) {
                     // newer style

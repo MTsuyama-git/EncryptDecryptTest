@@ -21,6 +21,8 @@ encrypt: $(ENCRYPT_RELEASE_TARGET)
 	./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa.pub
 decrypt: $(DECRYPT_RELEASE_TARGET)
 	./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa
+decryptrsa: $(DECRYPT_RELEASE_TARGET)
+	./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_rsa/id_rsa
 release: $(ENCRYPT_RELEASE_TARGET)
 debug: $(ENCRYPT_DEBUG_TARGET)
 pem: data/id_rsa.pub
