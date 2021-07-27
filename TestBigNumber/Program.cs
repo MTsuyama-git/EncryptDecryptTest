@@ -22,12 +22,25 @@ namespace TestBigNumber
 
                 );
                 
-                p.Print();
-                BNssl p1 = BNssl.Sub(p, BNssl.ValueOne);
-                p1.Print();
-                q.Print();
-                BNssl q1 = BNssl.Sub(q, BNssl.ValueOne);
-                q1.Print();
+                BNssl p128 = new(BNPrivate.Constants.data128_1);
+                BNssl q128 = new(BNPrivate.Constants.data128_2);
+
+                p128.Print();
+                q128.Print();
+
+                var hoge = (q128 + (p128 - q128));
+                Console.WriteLine("hoge");
+                hoge.Print();
+                // (q128 - p128).Print();
+                // (p128 - p128).Print();
+                // (p128 - BNssl.ValueOne).Print();
+
+                // p.Print();
+                // BNssl p1 = BNssl.Sub(p, BNssl.ValueOne);
+                // p1.Print();
+                // q.Print();
+                // BNssl q1 = BNssl.Sub(q, BNssl.ValueOne);
+                // q1.Print();
 	    
                 // dmp1.Print();
                 // dmq1.Print();

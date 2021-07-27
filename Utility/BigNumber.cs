@@ -232,7 +232,7 @@ namespace Utility {
             Console.WriteLine();
         }
 
-        public static BNssl Add(ref BNssl a, ref BNssl b) {
+        public static BNssl Add(in BNssl a, in BNssl b) {
             int cmp_res;
             bool r_neg = false;
             a.CheckTop();
@@ -259,6 +259,9 @@ namespace Utility {
             result.CheckTop();
             return result;
         }
+
+        public static BNssl operator +(in BNssl a, in BNssl b) => Add(in a, in b);
+        public static BNssl operator -(in BNssl a, in BNssl b) => Sub(in a, in b);
 
         public static BNssl Sub(in BNssl a, in BNssl b) {
             int cmp_res;
