@@ -4,12 +4,12 @@ LIB_RELEASE_UTILITY	:=	Utility/bin/Release/net5.0/Utility.dll
 LIB_DEBUG_UTILITY	:=	Utility/bin/Debug/net5.0/Utility.dll
 
 ifeq ($(OS),Windows_NT)
-ENCRYPT_RELEASE_TARGET	:=	Encrypt/bin/Release/net5.0/Encrypt.exe
-DECRYPT_RELEASE_TARGET	:=	Decrypt/bin/Release/net5.0/Decrypt.exe
-BIGNUM_RELEASE_TARGET	:=	TestBigNumber/bin/Release/net5.0/TestBigNumber.exe
-ENCRYPT_DEBUG_TARGET	:=	Encrypt/bin/Debug/net5.0/Encrypt.exe
-DECRYPT_DEBUG_TARGET	:=	Decrypt/bin/Debug/net5.0/Decrypt.exe
-BIGNUM_DEBUG_TARGET	:=	TestBigNumber/bin/Debug/net5.0/TestBigNumber.exe
+ENCRYPT_RELEASE_TARGET	:=	Encrypt/bin/x64/Release/net5.0/Encrypt.exe
+DECRYPT_RELEASE_TARGET	:=	Decrypt/bin/x64/Release/net5.0/Decrypt.exe
+BIGNUM_RELEASE_TARGET	:=	TestBigNumber/bin/x64/Release/net5.0/TestBigNumber.exe
+ENCRYPT_DEBUG_TARGET	:=	Encrypt/bin/x64/Debug/net5.0/Encrypt.exe
+DECRYPT_DEBUG_TARGET	:=	Decrypt/bin/x64/Debug/net5.0/Decrypt.exe
+BIGNUM_DEBUG_TARGET	:=	TestBigNumber/bin/x64/Debug/net5.0/TestBigNumber.exe
 else
 ENCRYPT_RELEASE_TARGET 	:=	Encrypt/bin/Release/net5.0/Encrypt
 DECRYPT_RELEASE_TARGET 	:=	Decrypt/bin/Release/net5.0/Decrypt

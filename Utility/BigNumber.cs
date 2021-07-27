@@ -229,6 +229,10 @@ namespace Utility {
                     }
                 }
             }
+            if(top == 0 || top == 1 && d[0] == 0)
+            {
+                Console.Write("0");
+            }
             Console.WriteLine();
         }
 
@@ -406,6 +410,36 @@ namespace Utility {
                 return 0;
             }
 
+	public static void DivWord(in ulong num, in ulong divisor, out ulong dv, out ulong rem) {
+	    dv = 0;
+	    rem = 0;
+	}
+
+
+	private static void AddWord(in ulong a, in ulong b, ref ulong carry, out ulong output) {
+	    const int halfwords = sizeof(ulong) * 8 / 2 ;
+	    const ulong halfwordmask = (ulong)(((ulong)1 << (halfwords)) - 1);
+	    ulong al = a & halfwordmask;
+	    ulong bl = b & halfwordmask;
+	    ulong ah = (a >> halfwords) & halfwordmask;
+	    ulong bh = (b >> halfwords) & halfwordmask;
+	    
+	    if(carry != 1 && carry != 0) {
+		throw new Exception("carry must be 0 or 1");
+	    }
+
+	    Console.WriteLine("mask:{0:X}", halfwordmask);
+	    Console.WriteLine("halfsize:{0}", halfwords);
+	    ulong rl = al + bl + carry;
+	    carry = (rl & ~halfwordmask) >> halfwords;
+	    rl &= halfwordmask;
+	    ulong rh = ah + bh + carry;
+	    carry = (rh & ~halfwordmask) >> halfwords;
+
+	    output = (rh << 32) | rl;
+	    return;
+	}
+
         static ulong AddWords(ref ulong[] r, in ulong[] a, in ulong[] b, out int rp, out int ap, out int bp, int n)
             {
                 ulong ll = 0;
@@ -418,9 +452,10 @@ namespace Utility {
                 }
                 // add from LSW to MSW of b
                 while(n != 0) {
-                    ll += a[ap++] + b[bp++];
-                    r[rp++] = ll & MASK2;
-                    ll >>= BITS2;
+		    AddWord(a[ap++], b[bp++], ref ll, out r[rp++]);
+                    // ll += a[ap++] + b[bp++];
+                    // r[rp++] = ll & MASK2;
+                    // ll >>= BITS2;
                     n --;
                 }
                 return ll;
