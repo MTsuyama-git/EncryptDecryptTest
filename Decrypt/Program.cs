@@ -68,13 +68,13 @@ namespace Decrypt
             string comment = buf.StrData;
             Console.WriteLine("Comment:" + comment);
             check_padding(buf);
-            Console.WriteLine("length of rsa_p:"+rsa_p.Size);
-            Console.WriteLine("length of rsa_q:"+rsa_q.Size);
-            Console.WriteLine("length of rsa_d:"+rsa_d.Size);
+            Console.WriteLine("length of rsa_p:" + rsa_p.Size);
+            Console.WriteLine("length of rsa_q:" + rsa_q.Size);
+            Console.WriteLine("length of rsa_d:" + rsa_d.Size);
 
-            BigInteger brsa_p = new (1, rsa_p.SubArray());
-            BigInteger brsa_q = new (1, rsa_q.SubArray());
-            BigInteger brsa_d = new (1, rsa_d.SubArray());
+            BigInteger brsa_p = new(1, rsa_p.SubArray());
+            BigInteger brsa_q = new(1, rsa_q.SubArray());
+            BigInteger brsa_d = new(1, rsa_d.SubArray());
 
             brsa_q = brsa_q.Subtract(new BigInteger("1"));
             brsa_p = brsa_p.Subtract(new BigInteger("1"));
@@ -82,7 +82,7 @@ namespace Decrypt
             BigInteger brsa_dp1 = brsa_d.Mod(brsa_p);
             BigInteger brsa_dq1 = brsa_d.Mod(brsa_q);
 
-            
+
 
             // BigInteger bp = new (rsa_p.SubArray());
             // BigInteger bq = new (rsa_q.SubArray());
@@ -94,10 +94,10 @@ namespace Decrypt
             // // bq = bq - 1;
             // bp = BigInteger.Subtract(bp, new BigInteger(1));
             // bq = BigInteger.Subtract(bq, new BigInteger(1));
-            
+
             // ConsumableData aaa= new(bp.ToByteArray());
             // ConsumableData bbb= new(bq.ToByteArray());
-            
+
             // aaa.dump();
             // Console.WriteLine();
             // bbb.dump();
@@ -123,13 +123,16 @@ namespace Decrypt
             // BNssl bnp = new(rsa_p.SubArray());
             // BNssl bnq = new(rsa_q.SubArray());
             // BNssl bnd = new(rsa_d.SubArray());
-   
+
             // BNssl bnp1 = BNssl.sub(bnp, BNssl.value_one());
             // BNssl bnq1 = BNssl.sub(bnq, BNssl.value_one());
-	    Console.Write("refdmp1:");new ConsumableData(ref_exponent1).dump();
-	    Console.Write("\nrefdmq1:");new ConsumableData(ref_exponent2).dump();
-	    Console.Write("\ndmp1:");new ConsumableData(brsa_dp1.ToByteArray()).dump();
-	    Console.Write("\ndmq1:");new ConsumableData(brsa_dq1.ToByteArray()).dump();
+            Console.Write("refdmp1:"); new ConsumableData(ref_exponent1).dump();
+            Console.Write("\nrefdmq1:"); new ConsumableData(ref_exponent2).dump();
+            Console.Write("\ndmp1:"); new ConsumableData(brsa_dp1.ToByteArray()).dump();
+            Console.Write("\ndmq1:"); new ConsumableData(brsa_dq1.ToByteArray()).dump();
+            Console.WriteLine("");
+            Console.WriteLine("refdmp1:{0}", brsa_dp1.ToString());
+            Console.WriteLine("refdmq1:{0}", brsa_dq1.ToString());
             // bnre1.print();
             // bnre2.print();
             // bnd.print();

@@ -1,909 +1,842 @@
 using System;
 
 namespace Utility {
+    public class BNsslPool {
+	BNsslPoolItem head, current, tail;
+	int __size, __used;
+	public static readonly int SIZE = 16;
+
+	private class BNsslPoolItem {
+	    public BNssl values;
+	    public BNsslPoolItem prev, next;	    
+	    public BNsslPoolItem() {
+		values = new BNssl[BNsslPool.SIZE];
+	    }
+	}
+
+	public BNsslPool() {
+	    head = current = tail = null;
+	    __used = 0;
+	    __size = 0;
+	}
+	
+	public void Release(uint num) {
+	    uint offset = (__used) - 1 % SIZE;
+	    __used  -= num;
+	    while((num--) != 0) {
+		current.values[offset].CheckTop();
+		if(offset == 0) {
+		    offset = SIZE - 1;
+		    current = current.prev;
+		}
+		else
+		    offset --;
+	    }
+	}
+
+	public BNssl Get(int flag)
+	{
+	    int bnp = 0;
+	    uint loop;
+
+	    if(__used == __size)
+	    {
+		BNsslPoolItem item = new();
+		for(loop - 0, bnp = 0; loop++ < SIZE; ++bnp) {
+		    item.values[bnp] = new ();
+		}
+		item.prev = tail;
+		item.next = null;
+
+		if(head == null) {
+		    head = current = tail = itam;
+		}
+		else {
+		    tail.next = item;
+		    tail = item;
+		    current = item;
+		}
+		__size += SIZE;
+		__used ++;
+		return item.values[0];
+	    }
+	    if(__used == 0) {
+		current = head;
+	    }
+	    else if(__used % SIZE == 0) {
+		current = current.next;
+	    }
+	    return current.vals((__used++) % SIZE);
+	}
+
+	public int Used {
+	    get { return __used; }
+	}
+
+	public int Size {
+	    get { return __size; }
+	}
+	    
+    }
+    public class BNstack {
+	static readonly int START_FRAMES = 32;
+	
+
+    }
+
     public class BNsslCtx {
+	BNsslPool pool;
+	BNsslStack stack;
+	uint used;
+	bool err_stack;
+	bool too_many;
+	int flags;
+	    
         public BNsslCtx() {
             // todo
+	    pool = new();
+	    stack = new();
+	    err_check = false;
+	    too_many = false;
+	    used =0;
         }
 
-        public BNssl get() {
-            return new BNssl();
+        public BNssl Get() {
+	    BNssl ret;
+	    if(err_check || too_many) {
+		throw new Exception("Error of Too many");
+	    }
+	    ret = pool.Get(flags);
+	    ret.ZeroClear();
+	    used++;
+            return ret;
         }
         
         public void end() {
         }
     }
 
-    public class BNsslPair {
-        public BNssl div;
-        public BNssl rem;
-        public BNsslPair(in BNssl div, in BNssl rem) {
-            this.div = div;
-            this.rem = rem;
-        }
+    class BNsslPair {
+	public BNssl div;
+	public BNssl rem;
+	public BNsslPair(in BNssl div, in BNssl rem) {
+	    this.div = div;
+	    this.rem = rem;
+	}
     }
-
+    
 
     public class BNssl {
-        ulong[] d;
-        int top;
-        int dmax;
-        int neg;
-        int flags;
+	private ulong[] d;
+	private int top;
+	private int dmax;
+	private bool neg;
+	private int flags;
 
-        private static readonly int MALLOCED = 0x01;
-        private static readonly int STATIC_DATA = 0x02;
-        private static readonly int CONSTTIME = 0x04;
-        private static readonly int BYTES = 8;
-        private static readonly int BITS = 128;
-        private static readonly int BITS2 = 64;
-        private static readonly int BITS4 = 32;
-        private static readonly int INT_MAX = 2147483647;
-        private static readonly ulong MASK2 = 0xffffffffffffffffL;
+	private static readonly int MALLOCED = 0x01;
+	private static readonly int STATIC_DATA = 0x02;
+	private static readonly int CONSTTIME = 0x04;
+	private static readonly int BYTES = 8;
+	private static readonly int BITS2 = BYTES * 8;
+	private static readonly int BITS = BITS2 * 2;
+	private static readonly int BITS4 = 32;
+	private static readonly int INT_MAX = 2147483647;
+	private static readonly ulong MASK2  =  0xffffffffffffffffL;
+	private static readonly ulong MASK2l =          0xffffffffL;
+	private static readonly ulong MASK2h =  0xffffffff00000000L;
+	private static readonly ulong MASK2h1 = 0xffffffff80000000L;
+	
+	private static ulong Lw(ulong a) {
+	    return a & MASK2;
+	}
+
+	private static ulong Lw(ulong a) {
+	    return (a >> BITS2) & MASK2;
+	}
+
 
         
-        public BNssl() {
-            flags = MALLOCED;
-            top = 0;
-            neg = 0;
-            dmax = 0;
-            d = null;
-            check_top();
-        }
-
-        public BNssl(in byte[] arr) {
-            int i, m;
-            flags = MALLOCED;
-            top = 0;
-            neg = 0;
-            dmax = 0;
-            d = null;
-            check_top();
-            int arr_offset = 0;
-            ulong l = 0;
-            int n = arr.Length;
-            if(n == 0) {
-                top = 0;
-                return;
-            }
-            i = (n - 1) / (BYTES) + 1;
-            m = (n - 1) % (BYTES);
-            wexpand(i);
-            top = i;
-            neg = 0;
-            while((n--) > 0) {
-                l = (l << 8) | arr[arr_offset++];
-                if(m--  == 0) {
-                    d[--i] = l;
-                    l = 0;
-                    m = BYTES - 1;
-                }
-            }
-            correct_top();
-        }
-
-
-        public static ulong add_words(ref ulong[] r, in ulong[] a, in ulong[] b, int n)
-            {
-                ulong c, l, t;
-                int a_offset, b_offset, r_offset;
-                a_offset = b_offset = r_offset = 0;
-                if(!(n >= 0)) {
-                    throw new Exception("n is zero");
-                }
-                c = 0;
-
-                while ((n & ~3) != 0)
-                {
-                    t = a[a_offset + 0];
-                    t = (t+c)&MASK2;
-                    c = (ulong)((t < c) ? 1 : 0);
-                    l = (t + b[b_offset + 0])&MASK2;
-                    c += (ulong)((l < t) ? 1 : 0);
-                    r[r_offset + 0] = l;
-                    t = a[a_offset + 1];
-                    t = (t + c)&MASK2;
-                    c = (ulong)((t < c) ? 1 : 0);
-                    l = (t + b[b_offset + 1])&MASK2;
-                    c += (ulong)((l < t) ? 1 : 0);
-                    r[r_offset + 1] = l;
-                    t = a[a_offset + 2];
-                    t = (t + c)& MASK2;
-                    c = (ulong)((t < c) ? 1 : 0);
-                    l = (t + b[b_offset + 2]) & MASK2;
-                    c += (ulong)((l < t) ? 1 : 0);
-                    r[r_offset + 2] = l;
-                    t = a[a_offset + 3];
-                    t = (t +c) & MASK2;
-                    c = (ulong)((t < c) ? 1 : 0);
-                    l = (t + b[b_offset + 3]) & MASK2;
-                    c += (ulong)((l < t ) ? 1 : 0);
-                    r[r_offset + 3] = l;
-                    a_offset++;
-                    b_offset++;
-                    r_offset++;
-                }
-                return c;
-            }
-
-        public static int ucmp(in BNssl a, in BNssl b) {
-            int i;
-            ulong t1, t2;
-            ulong[] ap, bp;
-
-            a.check_top();
-            b.check_top();
-            i = a.top - b.top;
-            if(i != 0) return i;
-            ap = a.d;
-            bp = b.d;
-            for(i = a.top - 1; i >= 0; --i)
-            {
-                t1 = ap[i];
-                t2 = bp[i];
-                if(t1 != t2)
-                {
-                    return ((t1 > t2) ? 1 : -1);
-                }
-            }
-            return 0;
-        }
-
-        public static BNssl add(BNssl a, BNssl b) {
-            BNssl r = new(); BNssl tmp;
-            int a_neg = a.neg;
-
-            a.check_top();
-            b.check_top();
-
-            if((a_neg ^ b.neg) != 0)
-            {
-                if(a_neg != 0)
-                {
-                    tmp = a;
-                    a = b;
-                    b = tmp;
-                }
-                if(ucmp(in a, in b) < 0) {
-                    r = usub(b, a);
-                    r.neg = 1;
-                }
-
-                else {
-                    r = usub(a, b);
-                    r.neg = 0;
-                }
-                return r;
-            }
-            r = uadd(a, b);
-            r.neg = a_neg;
-            r.check_top();
-            return r;
-        }
-        
-        public static BNssl uadd(BNssl a, BNssl b) {
-            BNssl r = new();
-            BNssl tmp;
-            int max, min, dif;
-            ulong t1, t2, carry;
-            ulong[] ap, bp, rp;
-            int i;
-            int rp_offset = 0;
-            int ap_offset = 0;
-            int bp_offset = 0;
-            a.check_top();
-            b.check_top();
-            
-            if(a.top < b.top)
-            {
-                tmp = a;
-                a = b;
-                b = tmp;
-            }
-
-            max = a.top;
-            min = b.top;
-            dif = max - min;
-            
-            r.wexpand(max + 1);
-            r.top = max;
-
-            ap = a.d;
-            bp = b.d;
-            rp = r.d;
-            
-            carry = add_words(ref rp, in ap, in bp, min);
-            rp_offset += min;
-            ap_offset += min;
-            bp_offset += min;
-
-            if(carry!=0) {
-                while(dif != 0) {
-                    dif--;
-                    t1 = ap[ap_offset++];
-                    t2 = (t1 + 1) & MASK2;
-                    rp[rp_offset++] = t2;
-                    if(t2 != 0)
-                    {
-                        carry = 0;
-                        break;
-                    }
-                }
-
-                if(carry != 0)
-                {
-                    rp[rp_offset] = 1;
-                    r.top++;
-                }
-
-            }
-            if(dif != 0 && (rp != ap || rp_offset != ap_offset)) {
-                while((dif--) != 0) {
-                    rp[rp_offset++] = ap[ap_offset++];
-                }
-            }
-            r.neg = 0;
-            r.check_top();
-                        
-            return r;
-
-        }
-
-
-
-        public static BNssl usub(BNssl a, BNssl b) {
-            BNssl r = new();
-            int max, min, dif;
-            ulong t1, t2;
-            ulong[] ap, bp, rp;
-            int i, carry;
-            int rp_offset = 0;
-            int ap_offset = 0;
-            int bp_offset = 0;
-            a.check_top();
-            b.check_top();
-            max = a.top;
-            min = b.top;
-            dif = max - min;
-                
-
-            if(dif < 0)
-            {
-
-                throw new Exception("BN usub error");
-            }
-            r.wexpand(max);
-            ap = a.d;
-            bp = b.d;
-            rp = r.d;
-            
-            carry = 0;
-            for (i = min; i != 0; --i)
-            {
-                t1 = ap[ap_offset++];
-                t2 = bp[bp_offset++];
-                if(carry != 0)
-                {
-                    carry=((t1 <= t2) ? 1  : 0);
-                    t1 = (t1 - t2 - 1)&MASK2;
-
-                }
-                else {
-                    carry=((t1 < t2) ? 1  : 0);
-                    t1 = (t1 - t2)&MASK2;
-                }
-                rp[rp_offset++] = t1 & MASK2;
-            }
-
-            if(carry != 0)
-            {
-                if(dif==0)
-                    return r;
-                while(dif>0){
-                    dif--;
-                    t1 = ap[ap_offset++];
-                    t2 = (t1-1)&MASK2;
-                    rp[rp_offset++] = t2;
-                    if(t1 != 0)
-                        break;
-                }
-            }
-            
-            if(rp != ap || rp_offset != ap_offset)
-            {
-                for(;;) {
-                    if((dif--) == 0) break;
-                    rp[rp_offset] = ap[ap_offset];
-                    if((dif--) == 0) break;
-                    rp[rp_offset + 1] = ap[ap_offset+1];
-                    if((dif--) == 0) break;
-                    rp[rp_offset + 2] = ap[ap_offset+2];
-                    if((dif--) == 0) break;
-                    rp[rp_offset + 3] = ap[ap_offset+3];
-                    rp_offset += 4;
-                    ap_offset += 4;
-
-                }
-            }
-            r.top = max;
-            r.neg = 0;
-            r.correct_top();
-            return r;
-        }
-
-
-        public static int cmp(in BNssl a, in BNssl b)
-            {
-                int i;
-                int gt, lt;
-                ulong t1, t2;
-
-                if(a == null || b == null) {
-                    if(a != null)
-                        return -1;
-                    else if(b != null)
-                        return 1;
-                    return 0;
-                }
-
-                a.check_top();
-                b.check_top();
-
-                if(a.neg != b.neg)
-                {
-                    if(a.neg != 0)
-                        return -1;
-                    else {
-                        return 1;
-                    }
-                }
-
-                if (a.neg == 0)
-                {
-                    gt = 1; lt = -1;
-                }
-                else {
-                    gt = -1; lt = 1;
-                }
-
-                if(a.top > b.top) return gt;
-                if(b.top > a.top) return lt;
-
-                for(i = a.top - 1; i >= 0; --i) {
-                    t1 = a.d[i];
-                    t2 = b.d[i];
-
-                    if(t1 > t2) return gt;
-                    if(t1 < t2) return lt;
-                }
-
-                return 0;
-            }
-
-        public static BNssl sub(BNssl a, BNssl b)
-            {
-             
-                BNssl ret = new();
-                BNssl tmp = new();
-                int max;
-                int _add = 0;
-                int _neg = 0;
-                a.check_top();
-                b.check_top();
-                if(a.neg != 0)
-                {
-                    if(b.neg != 0)
-                    {
-                        tmp = a;
-                        a = b;
-                        b = tmp;
-                    }
-                    else {
-                        _add = 1; _neg = 1;
-                    }
-                }
-                else {
-                    if(b.neg != 0) {
-                        _add = 1; _neg = 0;
-                    }
-                }
-
-                if(_add != 0)
-                {
-                    ret = uadd(a, b);
-                    ret.neg = _neg;
-                }
-                
-
-                max = (a.top > b.top)? a.top : b.top;
-
-                ret.wexpand(max);
-                if(ucmp(a, b) < 0)
-                {
-                    ret = usub(b, a);
-                    ret.neg = 1;
-                }
-                else {
-                    ret = usub(a, b);
-                    ret.neg = 1;
-                }
-
-                ret.check_top();
-                return ret;
-            }
-
-        public void print() {
-            int i, j, v, z=0;
-            string Hex="0123456789ABCDEF";
-            for(i = top - 1; i >= 0; --i)
-            {
-                for(j = BITS2 - 4; j >= 0; j-= 4)
-                {
-                    v = (((int)(d[i]>>(int)j))&0x0f);
-                    if(z != 0 || (v != 0))
-                    {
-                        Console.Write(Hex.Substring(v, 1));
-                    }
-                }
-            }
-            Console.WriteLine();
-        }
-
-        public static BNssl value_one() {
-            BNssl a = new();
-            a.set_word(1);
-
-            return a;
-        }
-
-        public BNsslPair div(in BNssl num, in BNssl divisor, ref BNsslCtx ctx) {
-            BNssl dv = new();
-            BNssl rm = new();
-            int norm_shift, i, loop;
-            BNssl tmp, wnum, snum, sdiv, res;
-            ulong[] resp, wnump;
-            ulong d0, d1;
-            int num_n, div_n;
-            int no_branch = 0;
-
-            if(num.top > 0 && num.d[num.top - 1] == 0) {
-                throw new Exception("Divisor not initialized");
-            }
-            
-            num.check_top();
-
-            if(((num.flags & CONSTTIME) != 0) || ((divisor.flags & CONSTTIME) != 0))
-            {
-                no_branch = 1;
-            }
-
-            dv.check_top();
-            rm.check_top();
-
-            divisor.check_top();
-
-            if(divisor.is_zero) {
-                throw new Exception("divisor is zero");
-            }
-            
-            if(no_branch == 0 && ucmp(num, divisor) < 0)
-            {
-                rm.copy(num);
-                dv.set_word(0);
-                return new BNsslPair(dv, rm);
-            }
-            
-            ctx = new BNsslCtx();
-            tmp=ctx.get();
-            snum=ctx.get();
-            sdiv=ctx.get();
-            if(sdiv == null || dv == null || tmp == null | snum == null) {
-                throw new Exception("null.");
-            }
-            norm_shift = (BITS2 - ((divisor.num_bits) % BITS2));
-            sdiv.lshift(divisor, norm_shift);
-            sdiv.neg = 0;
-            snum.lshift(num, norm_shift);
-            snum.neg = 0;
-            
-            if(no_branch!=0)
-            {
-                if(snum.top <= sdiv.top + 1)
-                {
-                    snum.wexpand(sdiv.top + 2);
-                    for(i = snum.top; i < sdiv.top + 2; ++i) snum.d[i] = 0;
-                    snum.top = sdiv.top + 2;
-                }
-            }
-            else {
-                snum.wexpand(snum.top + 1);
-                snum.d[snum.top] = 0;
-                snum.top++;
-            }
-
-            div_n = sdiv.top;
-            num_n = snum.top;
-            loop = num_n - div_n;
-            wnum = new();
-            wnum.neg = 0;
-            wnum.top = div_n;
-            wnum.d = new ulong[snum.d.Length - loop];
-            wnum.dmax = snum.dmax - loop;
-            
-            d0 = sdiv.d[div_n-1];
-            d1 = (div_n == 1) ? 0 : sdiv.d[div_n - 2];
-
-            wnump = snum.d;
-            int wnump_offset = num_n - 1;
-            Misc.BlockCopy(ref wnum.d, in snum.d, in loop);
-            dv.neg = (num.neg^divisor.neg);
-            dv.wexpand(loop+1);
-            dv.top = loop-no_branch;
-            resp = snum.d;
-            int resp_offset = loop - 1;
-
-
-            tmp.wexpand(div_n+1);
-            if(no_branch == 0)
-            {
-                if(ucmp(wnum, sdiv) >= 0) {
-                    wnum.clear_top2max();
-                    sub_words(wnum.d, wnum.d, sdiv.d, div_n);
-                    resp[resp_offset] = 1;
-                    
-                }
-                else {
-                    dv.top--;
-                }
-            }
-            if(dv.top == 0)
-                dv.neg = 0;
-            else
-                resp_offset--;
-
-            for(i = 0; i < loop-1; ++i, wnump_offset--, resp_offset--)
-            {
-                ulong q, l0;
-                ulong n0, n1, rem = 0;
-                n0 = wnump[wnump_offset + 0];
-                n1 = wnump[wnump_offset - 1];
-                if(n0 == d0)
-                    q = MASK2;
-                else {
-                    ulong t2;
-
-                    q = (ulong)(((((ulong)n0) << BITS2) | n1)/d0);
-                    rem = (n1-q*d0)&MASK2;
-                    t2 = (ulong)d1*q;
-                    for(;;)
-                    {
-                        if(t2 <= ((((ulong)rem) << BITS2) | wnump[wnump_offset-2]))
-                            break;
-                        q--;
-                        rem += d0;
-                        if(rem < d0) break;
-                        t2 -= d1;
-                    }
-
-                }
-                l0=mul_words(tmp.d, sdiv.d, div_n, q);
-                tmp.d[div_n] = 0;
-                wnump_offset --;
-                if(sub_words(wnum.d, wnum.d, tmp.d, div_n+1) != 0) {
-                    q--;
-                    if (add_words(ref wnum.d, in wnum.d, in sdiv.d, div_n) != 0) {
-                        wnump_offset ++;
-                    }
-                }
-                resp[resp_offset] = q;
-            }
-            snum.correct_top();
-            int neg = num.neg;
-            rm.rshift(snum, norm_shift);
-            if(!rm.is_zero) {
-                rm.neg = neg;
-            }
-            rm.check_top();
-            if(no_branch!=0)
-                dv.correct_top();
-            ctx.end();
-            return new BNsslPair(dv, rm);
-        }
-
-        public ulong mul_words(ulong[] a, ulong[] b, int div_n, ulong q) {
-            return 0;
-        }
-
-        void clear_top2max() {
-            
-        }
-
-        public static int sub_words(ulong[] a, ulong[] b, ulong[] c, int n) {
-            return 0;
-        }
-
-
-        public void rshift(BNssl num, int shift) {
-        }
-
-        public void lshift(BNssl num, int shift) {
-        }
-
-
-        public BNssl copy(BNssl b)
-            {
-                int i ;
-                ulong[] A;
-                ulong[] B;
-                int a_offset, b_offset;
-                a_offset = b_offset = 0;
-
-                b.check_top();
-
-                if(this==b) return this;
-                this.wexpand(b.top);
-                A = this.d;
-                B = b.d;
-                for(i = (b.top>>2); i > 0; i--, a_offset+=4, b_offset+=4) {
-                    ulong a0, a1, a2, a3;
-                    a0 = B[b_offset + 0];
-                    a1 = B[b_offset + 1];
-                    a2 = B[b_offset + 2];
-                    a3 = B[b_offset + 3];
-                    A[a_offset + 0] = a0;
-                    A[a_offset + 1] = a1;
-                    A[a_offset + 2] = a2;
-                    A[a_offset + 3] = a3;
-                }
-
-                switch(b.top&3) {
-                case 3:
-                    A[a_offset + 2] = B[b_offset+2];
-                    A[a_offset + 1] = B[b_offset+1];
-                    A[a_offset + 0] = B[b_offset+0];
-                    break;
-                case 2:
-                    A[a_offset + 1] = B[b_offset+1];
-                    A[a_offset + 0] = B[b_offset+0];
-                    break;
-                case 1:
-                    A[a_offset + 0] = B[b_offset+0];
-                    break;
-                case 0:
-                    break;
-                }
-
-                this.top = b.top;
-                this.neg = b.neg;
-                this.check_top();
-                return this;
-            }
-
-
-        public BNssl mod(in BNssl a, in BNssl b, ref BNsslCtx ctx) {
-            // todo
-            BNsslPair result = div(in a, in b, ref ctx);
-            return result.rem;
-        }
-
-        private void set_word(ulong w) {
-            check_top();
-            expand(sizeof(ulong)*8);
-            neg = 0;
-            d[0] = w;
-            top = (w != 0) ? 1 : 0;
-            check_top();
-            return;
-        }
-        
-        public byte[] toBytes() {
-            ulong l;
-            int n, i, idx;
-            check_top();
-            n = i = num_bytes;
-            byte[] to = new byte[i];
-            idx = 0;
-            while((i--) != 0)
-            {
-                l = d[i/BYTES];
-                to[idx++] = (byte)((l >> (8*(i%BYTES)))&0xFF);
-            }
-            return to;
-        }
-        
-        int num_bytes {
-            get {
-                return (num_bits + 7) / 8;
-            }
-        }
-
-        int num_bits_word(ulong l) {
-            byte[] bits= new byte[]{
-                0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
-                5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-                6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-                6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-                7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-                7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-                7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-                7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-                8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-            };
-
-// #if defined(SIXTY_FOUR_BIT_LONG)
-            if ((l & 0xffffffff00000000L) != 0)
-            {
-                if ((l & 0xffff000000000000L) != 0)
-                {
-                    if ((l & 0xff00000000000000L) != 0)
-                    {
-                        return(bits[(int)(l>>56)]+56);
-                    }
-                    else    return(bits[(int)(l>>48)]+48);
-                }
-                else
-                {
-                    if ((l & 0x0000ff0000000000L) != 0)
-                    {
-                        return(bits[(int)(l>>40)]+40);
-                    }
-                    else    return(bits[(int)(l>>32)]+32);
-                }
-            }
-            else
-                // #else
-                // #ifdef SIXTY_FOUR_BIT
-                //     if (l & 0xffffffff00000000LL)
-                //         {
-                //         if (l & 0xffff000000000000LL)
-                //             {
-                //             if (l & 0xff00000000000000LL)
-                //                 {
-                //                 return(bits[(int)(l>>56)]+56);
-                //                 }
-                //             else    return(bits[(int)(l>>48)]+48);
-                //             }
-                //         else
-                //             {
-                //             if (l & 0x0000ff0000000000LL)
-                //                 {
-                //                 return(bits[(int)(l>>40)]+40);
-                //                 }
-                //             else    return(bits[(int)(l>>32)]+32);
-                //             }
-                //         }
-                //     else
-                // #endif
-                // #endif
-            {
-                // #if defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
-                if ((l & 0xffff0000L) != 0)
-                {
-                    if ((l & 0xff000000L) != 0)
-                        return(bits[(int)(l>>24)]+24);
-                    else    return(bits[(int)(l>>16)]+16);
-                }
-                else
-                    // #endif
-                {
-                    // #if defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
-                    if ((l & 0xff00L) != 0)
-                        return(bits[(int)(l>>8)]+8);
-                    else    
-                        // #endif
-                        return(bits[(int)(l   )]  );
-                }
-            }
-        }
-
-
-        int num_bits {
-            get {
-                int i = top - 1;
-                check_top();
-                if(is_zero) return 0;
-                return ((i*BITS2) + num_bits_word(d[i]));
-            }
-        }
-
-        bool is_zero {
-            get {
-                return (top == 0);
-            }
-        }
-
-        private void correct_top() {
-            int tmp_top = top;
-            int offset = tmp_top - 1;
-            if(tmp_top > 0) {
-                for(offset = tmp_top - 1; tmp_top > 0; tmp_top--)
-                    if(d[offset--] != 0) break;
-                top = tmp_top;
-            }
-            pollute();
-        }
-
-        private void wexpand(in int i) {
-            if (i <= this.dmax) {
-                return;
-            }
-            expand2(i);
-        }
-
-        private void pollute() {
-            if(top < dmax) {
-                Random rnd = new Random();
-                ulong c = (ulong)rnd.Next();
-                Array.Fill<ulong>(d, c, top, (dmax-top));
-            }
-        }
-        
-        private void check_top() {
-            if(!(top == 0 || d[top - 1] != 0)) {
-                throw new Exception("invalid top");
-            }
-            pollute();
-        }
-
-        private void expand(in int bits) {
-            if(!(((((bits+BITS2-1))/BITS2)) <= dmax)) {
-                expand2((bits + BITS2-1)/BITS2);
-            }
-        }
-
-
-        private void expand2(in int words) {
-            if(words > dmax) {
-                ulong[] a = expand_internal(in words) ;
-                d = a;
-                dmax = words;
-            }
-            check_top();
-        }
-
-        private ulong[] expand_internal(in int words) {
-            ulong[] a, A = null;
-            ulong[] B = d;
-            int i;
-
-            if(words > (INT_MAX/(4*BITS2))) {
-                throw new Exception("Bignum too long");
-            }
-            get_flags(STATIC_DATA);
-            a = A = new ulong[words];
-            int offset_a = 0, offset_b = 0;
-            if(B != null) {
-                for(i = top >> 2 ; i > 0; i--, offset_a += 4, offset_b += 4) {
-                    ulong a0, a1, a2, a3;
-                    a0 = B[offset_b + 0];
-                    a1 = B[offset_b + 1];
-                    a2 = B[offset_b + 2];
-                    a3 = B[offset_b + 3];
-                    A[offset_a + 0] = a0;
-                    A[offset_a + 1] = a1;
-                    A[offset_a + 2] = a2;
-                    A[offset_a + 3] = a3;
-                }
-            }
-            return (a);
-
-        }
-
-        private void get_flags(int flag) {
-            
-        }
-
-        // private checkTop() {
-        //     BNssl b = this;
-            
-        // }
-
+	public BNssl() {
+	    __Init();
+	    CheckTop();
+	}
+
+	public BNssl(in byte[] arr) {
+	    __Init();
+	    int length, offset;
+	    int n, i, m;
+	    ulong l;
+	    for(length = arr.Length, offset = 0; length > 0 && arr[offset] == 0; offset++, length--)
+		continue;
+	    n = length;
+	    if(n == 0) {
+		top = 0;
+		return;
+	    }
+	    i = ((n - 1) / BYTES) + 1;
+	    m = ((n - 1) % BYTES);
+	    wExpand(in i);
+	    top = i;
+	    neg = false;
+	    l = 0;
+	    while((n--) > 0) {
+                l = ((l << 8) | arr[offset++]);
+		if(m-- == 0) {
+		    d[--i] = l;
+		    l = 0;
+		    m = BYTES - 1;
+		}
+	    }
+	    CorrectTop();
+	    return;
+	}
+
+	private void __Init() {
+	    flags = MALLOCED;
+	    top = 0;
+	    neg = false;
+	    dmax = 0;
+	    d = null;	    
+	}
+
+
+	public void CheckTop()
+	{
+	    CorrectTop();
+	}
+
+	public void CorrectTop() {
+	    while(top > 0 && d[top - 1] == 0) {
+		top--;
+	    }
+	    if(top == 0) {
+		neg = false;
+	    }
+	}
+
+	public void Print() {
+	    int i, j, v;
+	    bool z = false;
+	    if(neg) {
+		Console.Write("-");
+	    }
+	    for(i = top - 1; i >= 0; --i) {
+		for(j = BITS2 - 4; j >= 0; j-=4) {
+		    v = (int) ((d[i] >> j) & 0x0f);
+		    if(z  || v != 0) {
+			Console.Write("{0:X}", v);
+			z = true;
+		    }
+		}
+	    }
+	    Console.WriteLine();
+	}
+
+	public static BNssl Add(ref BNssl a, ref BNssl b) {
+	    int cmp_res;
+	    bool r_neg = false;
+	    a.CheckTop();
+	    b.CheckTop();
+	    BNssl result;
+
+	    // 符号が等しい
+	    if(a.IsNeg == b.IsNeg) {
+		result = Uadd(in a, in b);
+		result.neg = a.IsNeg;
+	    }
+	    else {
+		cmp_res = Cmp(in a, in b);
+		if(cmp_res != 0) {
+		    result = Usub(in a, in b);
+		    result.neg = ((cmp_res > 0) ? a.IsNeg : b.IsNeg);
+		}
+		else {
+		    // zero
+		    result = new();
+		    result.ZeroClear();
+		}
+	    }
+	    result.CheckTop();
+	    return result;
+	}
+
+	public static BNssl Sub(in BNssl a, in BNssl b) {
+	    int cmp_res;
+	    BNssl result;
+	    bool r_neg = false;
+	    a.CheckTop();
+	    b.CheckTop();
+	    if(a.neg != b.neg) {
+		result = Uadd(in a, in b);
+		result.neg = a.neg;
+	    }
+	    else {
+		cmp_res = Ucmp(in a, in b);
+		if(cmp_res != 0) {
+		    result = Usub(a, b);
+		    result.neg = ((cmp_res > 0)? a.IsNeg : !b.IsNeg);
+		}
+		else {
+		    result = ValueZero;
+		}
+	    }
+	    result.CheckTop();
+	    return result;
+	}
+
+	public static BNssl ValueOne {
+	    get {
+		BNssl r = new();
+		r.__Init();
+		r.d = new ulong[]{1};
+		r.top = 1;
+		r.dmax = 1;
+		r.neg = false;
+		return r;
+	    }
+	}
+
+	public static BNssl ValueZero {
+	    get {
+		BNssl r = new();
+		r.__Init();
+		r.ZeroClear();
+		return r;
+	    }
+	}
+
+	public void ZeroClear() {
+	    neg = false;
+	    top = 0;
+	}
+
+	static BNssl Uadd(in BNssl a, in BNssl b) {
+	    int max, min, dif;
+	    int ap, bp, rp;
+	    ulong carry, t1, t2;
+	    BNssl r = new();
+
+	    a.CheckTop();
+	    b.CheckTop();
+	    if(a.top < b.top) {
+		Uadd(b, a);
+	    }
+	    max = a.top;
+	    min = b.top;
+	    dif = max - min;
+
+	    // 桁上がりの可能性があるので+1
+	    r.wExpand(max + 1);
+	    r.top = max;
+	    
+	    ap = bp = rp = 0;
+	    
+	    carry = AddWords(ref r.d, in a.d, in b.d, ref rp, ref ap, bp, min);
+
+	    while(dif != 0) {
+		dif--;
+		t1 = a.d[ap++];
+		t2 = (t1 + carry) & MASK2;
+		r.d[rp++] = t2;
+		carry &= (ulong)((t2 == 0) ? 0 : 1); 
+	    }
+	    r.d[rp] = carry;
+	    r.top += (int)carry;
+	    r.neg = false;
+	    r.CheckTop();
+	    return r;
+	}
+
+	static BNssl Usub(in BNssl a, in BNssl b) {
+	    int cmp_ab = Cmp(in a, in b);
+	    int max, min, dif;
+	    ulong t1, t2, borrow;
+	    int rp, ap, bp;
+	    BNssl result;
+
+	    if(cmp_ab == 0) {
+		result = new ();
+		result.ZeroClear();
+		return result;
+	    }
+
+	    a.CheckTop();
+	    b.CheckTop();
+
+
+	    max = a.top;
+	    min = b.top;
+	    dif = max - min;
+	    if(dif < 0) {
+		return Usub(in b, in a);		
+	    }
+	    result  = new();
+	    result.wExpand(max);
+	    rp = ap = bp = 0;
+	    // ここで最下位ワードからbの最上位ワードまで(0...b.top)までの計算を行い，その結果のcarryだけを取得する
+	    borrow = SubWords(ref result.d, in a.d, in b.d, ref rp, ref ap, bp, min);
+
+	    // キャリーを考慮しつつ，値をコピーしていく
+	    while(dif != 0) {
+		dif--;
+		t1 = a.d[ap++];
+		t2 = (t1 - borrow) & MASK2;
+		result.d[rp++] = t2;
+		borrow &= (ulong)((t1 == 0) ? 1 : 0);
+	    }
+
+	    // 元のコードだとここで0のバイトの切り詰めを行っているが，CheckTopで十分
+	    result.top = max;
+	    result.neg = false;
+	    result.CheckTop();
+	    return result;
+	}
+
+	static ulong MulWords(ref ulong[] r, in ulong[] a, int num, ulong w)
+	{
+	    int rp, ap;
+	    ulong c1 = 0;
+	    rp = ap = 0;
+	    if(num < 0)
+		throw new Exception("num should not be less than zero");
+	    while(num) {
+		mul()
+	    }
+	}
+
+	static ulong AddWords(ref ulong[] r, in ulong[] a, in ulong[] b, ref int rp, ref int ap, int bp, int n)
+	{
+	    ulong ll = 0;
+	    if(n < 0){
+		throw new Exception("n must be greater than or equal to zero.");
+	    }
+	    if(n == 0){
+		return 0;
+	    }
+
+	    while(n != 0) {
+		ll += a[ap++] + b[bp++];
+		r[rp++] = ll & MASK2;
+		ll >>= BITS2;
+		n --;
+	    }
+	    return ll;
+	}
+
+
+	static ulong SubWords(ref ulong[] r, in ulong[] a, in ulong[] b, ref int rp, ref int ap, int bp, int n) 
+	{
+	    ulong t1, t2;
+	    int c = 0;
+	    if(n < 0) {
+		throw new Exception("n must be greater than or equal to zero.");
+	    }
+	    if(n == 0) {
+		return 0;
+	    }
+
+
+	    // ワード(64bit)毎に見ていく．
+	    // あるワードにおいてa_t と b_tを比較して，
+	    // a_t < b_t -> キャリーあり
+	    // b_t > a_t -> キャリー取消
+	    // a_t == b_t -> キャリー継続
+	    while (n != 0) {
+		t1 = a[ap++];
+		t2 = b[bp++];
+		r[rp++] = (t1 - t2 - (ulong)c) & MASK2;
+		n--;
+		c = (t1 < t2) ? 1 : (t1 > t2) ? 0 : c;
+	    }
+	    return (ulong)c;
+	}
+
+	static int Ucmp(in BNssl a, in BNssl b) {
+	    int i, ap, bp;
+	    ulong t1, t2;
+	    a.CheckTop();
+	    b.CheckTop();
+
+	    i = a.top - b.top;
+	    if(i != 0) {
+		return i;
+	    }
+	    ap = bp = 0;
+	    for(i = a.top - 1; i >= 0; --i)
+	    {
+		t1 = a.d[i];
+		t2 = b.d[i];
+		if (t1 != t2) {
+		    return (t1 > t2) ? 1 : -1;
+		}
+	    }
+	    return 0;
+	}
+
+	static int Cmp(in BNssl a, in BNssl b) {
+	    int i, cmp_result;
+	    int gt, lt;
+	    ulong t1, t2;
+	    if( a == null || b == null) {
+		if (a != null) return -1;
+		else if(b != null) return 1;
+		else return 0;
+	    }
+
+	    a.CheckTop();
+	    b.CheckTop();
+
+	    if(a.neg != b.neg) {
+		if(a.neg)
+		    return -1;
+		else
+		    return 1;
+	    }
+
+	    if(a.neg == false) {
+		gt = 1;
+		lt = -1;
+	    }
+	    else {
+		gt = -1;
+		lt = 1;
+	    }
+
+	    if (a.top > b.top)
+		return gt;
+	    if (a.top < b.top)
+		return lt;
+	    cmp_result = Ucmp(in a, in b);
+	    if(cmp_result > 0) {
+		return gt;
+	    }
+	    else if(cmp_result < 0){
+		return lt;
+	    }
+	    return 0;
+	}
+
+	private void Expand2(in int words) {
+	    if(words > dmax) {
+		if(words > INT_MAX / (4 * BITS2)) {
+		    throw new Exception("Bignum is too long");
+		}
+		if((flags & STATIC_DATA) != 0) {
+		    throw new Exception("Static Data Exception");
+		}
+		ulong[] dest = new ulong[words];
+		dmax = words;
+		if(top > 0) {
+		    Misc.BlockCopy(ref dest, in d, 0, top);
+		}
+		d = dest;
+	    }
+	}
+
+	private void wExpand(in int words) {
+	    if(words > dmax) {
+		Expand2(in words);
+	    }
+	}
+
+	public int NumBytes {
+	    get {
+		return (NumBits + 7) / 8;
+	    }
+	}
+
+	public static int NumBitsWord(ulong l) {
+	    ulong x, mask;
+	    int bits = (l != 0) ? 1 : 0;
+	    DumpWord(in l);
+	    if(BITS2 > 32) {
+		x = l >> 32;
+		mask = (ulong)(0 - (long)x) & MASK2;
+		mask = (ulong)(0 - (mask >> (BITS2 - 1))) & MASK2;
+		bits += (int)(32 & mask);
+		l ^= (x ^ l) & mask;
+	    }
+	    x = l >> 16;
+	    mask = ((ulong)(0 - (long)x) & MASK2);
+	    mask = (0 - (mask >> (BITS2 - 1)));
+	    bits += (int)(16 & mask);
+	    l ^= (x ^ l) & mask;
+
+	    x = l >> 8;
+	    mask = (0 - x) & MASK2;
+	    mask = (0 - (mask >> (BITS2 - 1)));
+	    bits += (int)(8 & mask);
+	    l ^= (x ^ l) & mask;
+
+	    x = l >> 4;
+	    mask = (0 - x) & MASK2;
+	    mask = (0 - (mask >> (BITS2 - 1)));
+	    bits += (int)(4 & mask);
+	    l ^= (x ^ l) & mask;
+
+	    x = l >> 2;
+	    mask = (0 - x) & MASK2;
+	    mask = (0 - (mask >> (BITS2 - 1)));
+	    bits += (int)(2 & mask);
+	    l ^= (x ^ l) & mask;
+
+	    x = l >> 1;
+	    mask = (0 - x) & MASK2;
+	    mask = (0 - (mask >> (BITS2 - 1)));
+	    bits += (int)(1 & mask);
+	    return bits;
+	}
+
+	public static void DumpWord(in ulong v) {
+	    Console.WriteLine("v: 0b{0}", Convert.ToString((long)v, 2));
+	}
+
+	public int NumBits {
+	    get {
+		int i = top - 1;
+		CheckTop();
+		if(IsZero) {
+		    return 0;
+		}
+		return ((i * BITS2) + NumBitsWord(d[i]));
+	    }
+	}
+
+	public static BNsslPair Div(in BNssl num, in BNssl divisor)
+	{
+	    if(divisor.IsZero) {
+		throw new Exception("Divisor is zero");
+	    }
+	    if(divisor.d[top - 1] == 0) {
+		throw new Exception("Divisor is not initialized");
+	    }
+
+	    return __DivFixedTop(in num, in divisor);
+	}
+
+	private static BNsslPair __DivFixedTop(in BNssl num, in BNssl divisor) {
+	    int norm_shift, i, j, loop;
+	    BNssl tmp , snum, sdiv, res;
+	    int wnum_ptr = 0, wnumtop_ptr = 0, resp_ptr = 0;;
+	    ulong d0, d1;
+	    int num_n, div_n;
+
+	    BNssl dv, rm;
+	    dv = new();
+	    rm = new();
+
+	    if(divisor.top <= 0 || divisor.d[top - 1] == 0) {
+		throw new Exception("Divisor must be greater than 0");
+	    }
+	    num.CheckTop();
+	    divisor.CheckTop();
+	    dv.CheckTop();
+	    rm.CheckTop();
+	    res = dv;
+	    tmp = new();
+	    snum = new();
+	    sdiv = new();
+ 
+	    // copy divisor to sdiv
+	    Copy(sdiv, divisor);
+	    
+	    // sdivを左に詰める
+	    norm_shift = sdiv.LeftAlign();
+	    sdiv.neg = false;
+	    // snum，sdivが左につめた分だけを左につめる
+	    snum.LshiftFixedTop(num, norm_shift);
+	    div_n = sdiv.top;
+	    num_n = snum.top;
+
+	    // numとdivの流さを揃える
+	    if(num_n <= div_n) {
+		snum.wExpand(div_n + 1);
+		Array.Fill<ulog>(snum.d, 0, num_n, div_n - num_n + 1);
+		// wExpandするとtopに補正がかかるので，元に戻す
+		snum.top = num_n = div_n + 1;
+	    }
+	    loop = num_n - div_n;
+
+	    wnum_ptr = loop;
+	    wnumtop_ptr = num_n - 1;
+	  
+	    d0 = sdiv.d[div_n - 1];
+	    d1 = (div_n == 1) ? 0 : sdiv.d[div_n - 2];
+	    
+	    // div_nがnum_nより短い分だけ伸ばす(左に寄ってるので伸ばすだけ)
+	    res.wExpand(loop);
+	    
+	    // 符号は2つの数値のxor
+	    res.neg = (num.neg ^ divisor.neg);
+	    res.top = loop;
+	    resp_ptr = loop;
+
+	    // 
+	    tmp.wExpand(div_n + 1);
+	    for(i = 0; i < loop; ++i, wnumtop_ptr --) {
+		ulong q, l0;
+
+		ulong n0, n1, rem = 0;
+		n0 = snum.d[wnumtop_ptr];
+		n1 = snum.d[wnumtop_ptr-1];
+		if(n0 == d0)
+		    q = MASK2;
+		else {
+		    ulong n2 = (wnumtop_ptr == wnum) ? 0 : snum.d[wnumtop_ptr];
+		    q = Math.DivRem(n0, d0, out rem);
+		    
+			
+		}
+		
+		
+	
+	    }
+	    snum.neg = num.neg;
+	    snum.top = di_n;
+	    rm.RshiftFixedTop(snum, norm_shift);
+	    return new BNsslPair(dv, rm);
+	}
+
+
+	// 最上位ワードを左につめる
+	int LeftAlign()
+	{
+	    ulong n, m, rmask;
+	    int top = this.top;
+	    int rshift = NumBitsWord(d[top - 1]), lshift, i;
+	    // 左側の空きを計算
+	    lshift = BITS2 - rshift;
+	    rshift %= BITS2;
+	    // ???
+	    rmask = (ulong)(0 - rshift);
+	    rmask |= (rmask >> 8);
+	    for(i = 0, m = 0; i < top; ++i){
+		n = d[i];
+		d[i] = ((n << lshift) | m) & MASK2;
+		m = (n >> rshift) & rmask;
+	    }
+	    return lshift;
+	}
+
+	void LshiftFixedTop(in BNssl a, in int n) {
+	    int i, nw;
+	    uint lb, rb;
+	    int tp, fp;
+	    ulong l, m, rmask = 0;
+	    if(n < 0) {
+		throw new Exception("n should not be less than zero.");
+	    }
+	    this.CheckTop();
+	    a.CheckTop();
+	    // # of words
+	    nw = n / BITS2;
+	    this.wExpand(a.top + nw + 1);
+	    if(a.top != 0) {
+		lb = (uint) n % BITS2;
+		rb = BITS2 - lb;
+		rb %= BITS2;
+		rmask = (ulong) 0 - rb;
+		rmask |= rmask >> 8;
+		fp = 0;
+		tp = nw;
+		l = a.d[fp + a.top - 1];
+		this.d[tp + a.top] = (l >> rb) & rmask;
+		for(i = a.top - 1; i > 0; i--) {
+		    m = l << lb;
+		    l = a.d[fp + i - 1];
+		    this.d[tp + i] = (m | (( l >> rb ) & rmask)) & MASK2;
+		}
+		this.d[tp] = (l << lb) & MASK2;
+	    }
+	    else {
+		this.d[nw] = 0;
+	    }
+	    if(nw != 0) {
+		Array.Fill<ulong>(this.d, 0, 0, nw);
+	    }
+
+	    this.neg = a.neg;
+	    this.top = a.top + nw + 1;
+	}
+
+// static int bn_left_align(BIGNUM *num)
+// {
+//     BN_ULONG *d = num->d, n, m, rmask;
+//     int top = num->top;
+//     int rshift = BN_num_bits_word(d[top - 1]), lshift, i;
+
+//     lshift = BN_BITS2 - rshift;
+//     rshift %= BN_BITS2;            /* say no to undefined behaviour */
+//     rmask = (BN_ULONG)0 - rshift;  /* rmask = 0 - (rshift != 0) */
+//     rmask |= rmask >> 8;
+
+//     for (i = 0, m = 0; i < top; i++) {
+//         n = d[i];
+//         d[i] = ((n << lshift) | m) & BN_MASK2;
+//         m = (n >> rshift) & rmask;
+//     }
+
+//     return lshift;
+// }
+
+
+	private static void Copy(ref BNssl dest, in BNssl src) {
+	    int words;
+	    src.CheckTop();
+	    words = src.dmax;
+	    if(dest == src)
+		return;
+	    desta.wExpand(words);
+	    if(src.top > 0) {
+		Misc.BlckCopy(dest.d, src.d, 0, words);
+	    }
+	    dest.neg = src.neg;
+	    dest.top = src.top;
+	    dest.CheckTop();
+	    return;
+	}
+
+
+	public bool AbsIsWord(in ulong w) {
+	    return ((top == 1) && (d[0] == w) || ((w == 0) && top == 0));
+	}
+
+	public bool IsOne {
+	    get {
+		return (AbsIsWord(1) || IsNeg);
+	    }
+	}
+
+	public bool IsZero {
+	    get {
+		return top == 0;
+	    }
+	}
+
+	public bool IsNeg
+	{
+	    get
+	    {
+		return neg;
+	    }
+	}
+
+	private byte[] BinPad(in int length, in Endian endian=Endian.BIG) {
+	    int n;
+	    ulong i, lasti, j, atop, mask;
+	    ulong l;
+
+
+	    n = 0;
+
+	    return new byte[1];
+	}
+
+
+	public byte[] ByteArray {
+	    get {
+		return BinPad(-1);
+	    }
+	}
     }
 }

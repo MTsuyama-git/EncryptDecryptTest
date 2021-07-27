@@ -11,8 +11,8 @@ namespace Utility {
             return result;
         }
 
-        public static T[] BlockCopy<T>(ref T[] dest, in T[] data, in int offset = 0) {
-            int _length = dest.Length;
+        public static T[] BlockCopy<T>(ref T[] dest, in T[] data, in int offset = 0, in int length = 0) {
+            int _length = (length > 0)? length : dest.Length;
             if(_length + offset > data.Length) {
                 _length = data.Length - offset;
             }
