@@ -32,6 +32,8 @@ decrypt: $(DECRYPT_RELEASE_TARGET)
 	./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa
 decryptrsa: $(DECRYPT_RELEASE_TARGET)
 	./$(DECRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_rsa/id_rsa
+encryptrsa: $(ENCRYPT_RELEASE_TARGET)
+	./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_rsa/id_rsa.pub
 bignum: $(BIGNUM_RELEASE_TARGET)
 	./$(BIGNUM_RELEASE_TARGET)
 release: $(ENCRYPT_RELEASE_TARGET)

@@ -23,20 +23,10 @@ namespace Utility
         {
 			byte[] arrayA = a.SubArray();
 			byte[] arrayB = b.SubArray();
-			Console.Write("a:");
-			a.dump();
-			new ConsumableData(a.SubArray()).dump();
-			Console.Write("b:");
-			b.dump();
-			new ConsumableData(b.SubArray()).dump();
 			byte[] c = new byte[arrayA.Length + arrayB.Length];
 			int typeSize = System.Runtime.InteropServices.Marshal.SizeOf(
 			    arrayA.GetType().GetElementType());
 			Buffer.BlockCopy(arrayA, 0, c, 0, arrayA.Length * typeSize);
-			for(var i = 0; i < arrayA.Length; i++) {
-			    Console.Write("{0:X2} ", c[i]);
-			}
-			Console.WriteLine();
 			Buffer.BlockCopy(arrayB, 0, c, arrayA.Length, arrayB.Length);
 			return new(c);
 		}
