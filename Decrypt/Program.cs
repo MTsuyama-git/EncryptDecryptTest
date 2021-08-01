@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Utility;
+using System.Linq;
 using System.Numerics;
 
 namespace Decrypt
@@ -100,77 +101,103 @@ namespace Decrypt
 	    const string OpenSSHPrivateKeyHeader = @"-----BEGIN OPENSSH PRIVATE KEY-----";
 	    const string OpenSSHPrivateKeyFooter = @"-----END OPENSSH PRIVATE KEY-----";
 
-	    if(contents.Substring(0, RsaPrivateKeyHeader.Length) == RsaPrivateKeyHeader) {
-		// TODO: old style
-		Console.WriteLine(RsaPrivateKeyHeader);
-		contents = contents.Replace("\r", String.Empty);
-		string[] contentlines = contents.Split(del, StringSplitOptions.RemoveEmptyEntries);
-		contents = String.Empty;
-                List<string> headers = new();
-		foreach(string line in contentlines) {
-		    if(line.Contains(':'))
-		    {
-			headers.Add(line);
-                        continue;
-		    }
-		    else if(line.Length == 0)
-                    {
-                        continue;
-                    }
-		    contents += line;
-		}
-		contents = contents.Replace(RsaPrivateKeyHeader, String.Empty).Replace(RsaPrivateKeyFooter, String.Empty).Replace("\n", String.Empty);
-		Console.WriteLine(contents);
-		byte[] encrypted_data = Convert.FromBase64String(contents);
-		ConsumableData data = new(encrypted_data);
-		data.dump();
-                SshCipher cipher = null;
-                string encryptInfo;
-                int ivlen;
-                byte[] iv = null;
-                foreach(string header in headers)
-                {
-                    var h = header.Split(":");
-                    if (h[0] == "DEK-Info")
-                    {
-                        encryptInfo = h[1].Split(",")[0].Replace(" ", String.Empty);
-                        encryptInfo = encryptInfo.ToLower();
-                        string ivInfo = h[1].Split(",")[1].Replace(" ", String.Empty);
-                        iv = ByteConverter.ParseStrAsByteArray(ivInfo);
-                        new ConsumableData(iv).dump();
-                        //cipher = SshCipher.ciphers[encryptInfo];
-                    }
-                }
+			if (contents.Substring(0, RsaPrivateKeyHeader.Length) == RsaPrivateKeyHeader) {
+				// TODO: old style
+				Console.WriteLine(RsaPrivateKeyHeader);
+				contents = contents.Replace("\r", String.Empty);
+				string[] contentlines = contents.Split(del, StringSplitOptions.RemoveEmptyEntries);
+				contents = String.Empty;
+				List<string> headers = new();
+				foreach (string line in contentlines) {
+					if (line.Contains(':'))
+					{
+						headers.Add(line);
+						continue;
+					}
+					else if (line.Length == 0)
+					{
+						continue;
+					}
+					contents += line;
+				}
+				contents = contents.Replace(RsaPrivateKeyHeader, String.Empty).Replace(RsaPrivateKeyFooter, String.Empty).Replace("\n", String.Empty);
+				Console.WriteLine(contents);
+				byte[] encrypted_data = Convert.FromBase64String(contents);
+				ConsumableData data = new(encrypted_data);
+				data.dump();
+				SshCipher cipher = null;
+				string encryptInfo;
+				int ivlen;
+				byte[] iv = null;
+				foreach (string header in headers)
+				{
+					var h = header.Split(":");
+					if (h[0] == "DEK-Info")
+					{
+						encryptInfo = h[1].Split(",")[0].Replace(" ", String.Empty);
+						encryptInfo = encryptInfo.ToLower();
+						string ivInfo = h[1].Split(",")[1].Replace(" ", String.Empty);
+						iv = ByteConverter.ParseStrAsByteArray(ivInfo);
+						new ConsumableData(iv).dump();
+						//cipher = SshCipher.ciphers[encryptInfo];
+					}
+				}
 
-                if(iv == null)
+				if (iv == null)
+				{
+					Console.WriteLine("Cannot load IV");
+					return;
+				}
+				if (cipher != null)
+				{
+					Console.WriteLine("IVLEN:{0}, KEYLEN: {1}", cipher.ivLen, cipher.keyLen);
+					ivlen = cipher.ivLen;
+				}
+				else
+				{
+					ivlen = 16;
+				}
+				using MD5 md5 = MD5.Create();
+				md5.Initialize();
+				byte[] result = null;
+				// using(MemoryStream s = new()) {
+				//     s.Write(ByteConverter.Str2ByteArray("testtest"), 0, 8);
+				//     buf = s.GetBuffer();
+				//     s.Write(iv, 0, 8);
+				//     result = md5.ComputeHash(s.ToArray());
+				// }
+
+				// Console.Write("md5:");
+				// new ConsumableData(result).dump();
+
+				ConsumableData cd = new(ByteConverter.Str2ByteArray("testtest"));
+				ConsumableData cd2 = new(Misc.BlockCopy(iv, 0, 8));
+				ConsumableData cd3 = cd + cd2;
+
+				result = md5.ComputeHash(cd3.SubArray());
+				Console.Write("md5:");
+				new ConsumableData(result).dump();
+				byte[] decrypted = null;
+				using (AesManaged aes = new ())
                 {
-                    Console.WriteLine("Cannot load IV");
-                    return;
-                }
-                if(cipher != null)
-                {
-                    Console.WriteLine("IVLEN:{0}, KEYLEN: {1}", cipher.ivLen, cipher.keyLen);
-                    ivlen = cipher.ivLen;
-                }
-                else
-                {
-                    ivlen = 16;
-                }
-                using MD5 md5 = MD5.Create();
-                md5.Initialize();
-		byte[] result = null;
-		using(MemoryStream s = new()) {
-		    s.Write(ByteConverter.Str2ByteArray("testtest"), 0, 8);
-		    s.Write(iv, 0, 8);
-		    result = md5.ComputeHash(s.ToArray());
-		}
-                // ConsumableData cd = new(ByteConverter.Str2ByteArray("testtest"));
-                // ConsumableData cd2 = new(Misc.BlockCopy(iv, 0, 8));
-                // ConsumableData cd3 = cd + cd2;
-                
-                // byte[] result = md5.ComputeHash(cd.SubArray());
-		Console.Write("md5:");
-                new ConsumableData(result).dump();
+					aes.KeySize = 16*8;
+					aes.BlockSize = 16*8;
+					aes.IV = iv;
+					aes.Key = result;
+					aes.Mode = CipherMode.CBC;
+					aes.Padding = PaddingMode.PKCS7;
+					using (var decryptor = aes.CreateDecryptor())
+					using (var mstream1 = new MemoryStream(encrypted_data))
+					using (var cstream = new CryptoStream(mstream1, decryptor, CryptoStreamMode.Read))
+					using (var mstream2 = new MemoryStream())
+					{
+						cstream.CopyTo(mstream2);
+						decrypted = mstream2.ToArray();
+					}
+					new ConsumableData(decrypted).dump();
+
+
+				}
                 //using(RijndaelManaged rijndael = new())
                 //{
                 //   rijndael.BlockSize = 128;
