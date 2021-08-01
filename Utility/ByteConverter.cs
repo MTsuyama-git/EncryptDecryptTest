@@ -17,6 +17,44 @@ namespace Utility {
 	    return Misc.BlockCopy(in data, in ptr, in length);
 	}
 
+		public static byte[] ParseStrAsByteArray(in string data)
+        {
+			byte[] result = new byte[data.Length / 2 + ((data.Length % 2 == 1) ? 1 : 0)];
+			int idx = 0;
+			foreach(char c in data)
+            {
+				byte val;
+				if('a' <= c && c <= 'f')
+                {
+					val = (byte)(c - 'a' + 10);
+                }
+				else if ('A' <= c && c <= 'F')
+				{
+					val = (byte)(c - 'A' + 10);
+				}
+				else if ('0' <= c && c <= '9')
+                {
+					val = (byte)(c - '0');
+                }
+				else
+                {
+					continue;
+                }
+				if(idx % 2 == 0)
+                {
+					result[idx / 2] = (byte)(val << 4);
+                }
+				else
+                {
+					result[idx / 2] |= (byte)(val & 0xFF);
+                }
+				idx++;
+				
+			}
+			return result;
+		}
+
+
 	public static byte[] Str2ByteArray(in string data) {
 	    return System.Text.Encoding.UTF8.GetBytes(data);
 	}
