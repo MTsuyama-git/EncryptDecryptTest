@@ -15,7 +15,44 @@ namespace Utility {
 	private static readonly string OpenSSHPrivateKeyHeader = @"-----BEGIN OPENSSH PRIVATE KEY-----";
 	private static readonly string OpenSSHPrivateKeyFooter = @"-----END OPENSSH PRIVATE KEY-----";
 
+	public static RSACryptoServiceProvider ReadSSHPublicKeyFromContent(string contents)
+        {
+	    
+	    string[] lines = contents.Split("\n");
+	    return ReadSSHPublieKeyBody(lines);
+	}
 
+	private static RSACryptoServiceProvider ReadSSHPublieKeyBody(string[] lines)
+        {
+	    RSACryptoServiceProvider rsa = null;
+	    foreach(string line in lines)
+            {
+		var c = line.Substring(0, 1);
+		if (c == "#" || c == "\n" || c == "\0") // separator or comment
+		    continue;
+		CheckKeyFmt(line);
+		var items = line.Split(del, StringSplitOptions.RemoveEmptyEntries);
+		// body
+		if (items.Length >= 3)
+		{
+		    try
+		    {
+			rsa = new();
+			RSAParameters rsaParams = ParseSSHPublicKey(line);
+			rsa.ImportParameters(rsaParams);
+		    }
+		    catch (Exception e)
+		    {
+			throw new Exception(e.Message);
+		    }
+		    if (rsa != null)
+		    {
+			return rsa;
+		    }
+		}
+	    }
+	    return null;
+	}
 	public static RSACryptoServiceProvider ReadSSHPublicKey(string keyPath) {
 	    RSACryptoServiceProvider rsa = null;
 	    string line;
@@ -33,9 +70,8 @@ namespace Utility {
 			    rsa = new();
 			    RSAParameters rsaParams = ParseSSHPublicKey(line);
 			    rsa.ImportParameters(rsaParams);
-			    var plainBytes = Encoding.UTF8.GetBytes("testtest");
-			    var cipherBytes = rsa.Encrypt(plainBytes, RSAEncryptionPadding.Pkcs1);
 			} catch(Exception e) {
+			    throw new Exception(e.Message);
 			}
 			if(rsa != null) {
 			    return rsa;
@@ -69,15 +105,15 @@ namespace Utility {
 	    return true;
 	}
  
-	public static RSA ReadSSHPrivateKey(string keyPath) {
+	public static RSA ReadSSHPrivateKey(string keyPath, Func<string> passwordCb = null, bool verbose = false) {
 	    RSA rsa = RSA.Create();
 
 	    string contents = System.IO.File.ReadAllText(keyPath);
 	    if (contents.Substring(0, RsaPrivateKeyHeader.Length) == RsaPrivateKeyHeader) {
-		rsa.ImportRSAPrivateKey(ReadRSAPrivateKey(contents), out _);
+		rsa.ImportRSAPrivateKey(ReadRSAPrivateKey(contents, passwordCb, verbose), out _);
 	    }
 	    else if(contents.Substring(0, OpenSSHPrivateKeyHeader.Length) == OpenSSHPrivateKeyHeader) {
-		rsa.ImportParameters(ReadOpenSSHPrivateKey(contents));
+		rsa.ImportParameters(ReadOpenSSHPrivateKey(contents, passwordCb, verbose));
 	    }
 	    else {
 		throw new Exception("Invalid of unspported SSH key type");
@@ -85,7 +121,7 @@ namespace Utility {
 	    return rsa;
 	}
     
-	public static ReadOnlySpan<byte> ReadRSAPrivateKey(string contents, bool verbose=false) {
+	public static ReadOnlySpan<byte> ReadRSAPrivateKey(string contents, Func<string> passwordCb = null, bool verbose=false) {
 	    contents = contents.Replace("\r", String.Empty);
 	    string[] contentlines = contents.Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	    contents = String.Empty;
@@ -126,8 +162,12 @@ namespace Utility {
 	    CipherMode cipherMode = CipherModeDic[encryptInfo[2]];
 	    using MD5 md5 = MD5.Create();
 	    md5.Initialize();
-	    Console.Write("Input Passpharse:");
-	    ConsumableData rawData = new ConsumableData(ByteConverter.Str2ByteArray(Console.ReadLine())) + new ConsumableData(Misc.BlockCopy(iv, 0, 8));
+	    string password = "";
+	    if(passwordCb != null)
+            {
+		password = passwordCb();
+            }
+	    ConsumableData rawData = new ConsumableData(ByteConverter.Str2ByteArray(password)) + new ConsumableData(Misc.BlockCopy(iv, 0, 8));
 	    byte [] result = md5.ComputeHash(rawData.SubArray());
 	    byte[] decrypted = null;
 	    using (AesManaged aes = new())
@@ -135,7 +175,7 @@ namespace Utility {
 		aes.KeySize = ivlen;
 		aes.BlockSize = ivlen;
 		aes.IV = iv;
-		aes.Key = result;
+		aes.Key = result; 
 		aes.Mode = CipherMode.CBC;
 		aes.Padding = PaddingMode.PKCS7;
 		using (var decryptor = aes.CreateDecryptor())
@@ -147,8 +187,8 @@ namespace Utility {
 		    decrypted = mstream2.ToArray();
 		}
 	    }
-	    return new ReadOnlySpan<byte>(decrypted);
-	}
+            return new ReadOnlySpan<byte>(decrypted);
+        }
 
 	private static readonly Dictionary<string, CipherMode> CipherModeDic = new () {
 	    {"CBC", CipherMode.CBC},
@@ -159,7 +199,7 @@ namespace Utility {
 	};
 
 
-	public static RSAParameters ReadOpenSSHPrivateKey(string contents, bool verbose = false) {
+	public static RSAParameters ReadOpenSSHPrivateKey(string contents, Func<string> passwordCb = null, bool verbose = false) {
 	    contents = contents.Replace(OpenSSHPrivateKeyHeader, String.Empty).Replace(OpenSSHPrivateKeyFooter, String.Empty).Replace("\r", String.Empty).Replace("\n", String.Empty);
 	    ConsumableData data = new(Convert.FromBase64String(contents));
 	    string magic = data.readString(14);
@@ -208,8 +248,11 @@ namespace Utility {
 	    if(kdf_name == "bcrypt") {
 		byte[] salt = kdf.rawData;
 		uint round = kdf.U32;
-		Console.Write("Input Passpharse:");
-		string passphrase = Console.ReadLine();
+		string passphrase = "";
+		if(passwordCb != null)
+                {
+		    passphrase = passwordCb();
+                }
 		if(Bcrypt.pbkdf(passphrase, salt, ref key, (int)round) < 0) {
 		    throw new Exception("Invalid format@pbkdf");
 		}

@@ -15,6 +15,11 @@ namespace Decrypt
         private string keyPath = "";
 	private static readonly int CHUNK_SIZE = 4096;
 
+	string passwordCb() {
+	    Console.Write("Input Passphrase:");
+	    return Console.ReadLine();   
+	}
+
         public Program(string[] args)
 	{
 	    if (args.Length < 2)
@@ -37,7 +42,7 @@ namespace Decrypt
 		keyPath = System.IO.Path.Combine(userprofile, ".ssh", "id_rsa");
 	    }
 
-	    RSA rsa = SSHKeyManager.ReadSSHPrivateKey(keyPath);
+	    RSA rsa = SSHKeyManager.ReadSSHPrivateKey(keyPath, passwordCb);
 	    using (BinaryReader br = new(File.Open(eintity, FileMode.Open))) {
 		byte[] chunk;
 		chunk = br.ReadBytes(CHUNK_SIZE);
