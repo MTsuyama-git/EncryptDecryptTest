@@ -29,7 +29,7 @@ UTILITY_SOURCE:= $(wildcard Utility/*.cs)
 encrypt: $(ENCRYPT_RELEASE_TARGET)
 	./$(ENCRYPT_RELEASE_TARGET) sample.txt sample.aes ./data_openssh/id_rsa.pub
 decrypt: $(DECRYPT_RELEASE_TARGET)
-	./$(DECRYPT_RELEASE_TARGET) sample.aes sample.txt ./data_openssh/id_rsa
+	./$(DECRYPT_RELEASE_TARGET) sample.aes output.txt ./data_openssh/id_rsa
 decryptrsa: $(DECRYPT_RELEASE_TARGET)
 	./$(DECRYPT_RELEASE_TARGET) sample.aes sample.txt ./data_rsa/id_rsa
 encryptrsa: $(ENCRYPT_RELEASE_TARGET)
