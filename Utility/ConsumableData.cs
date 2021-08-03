@@ -3,21 +3,33 @@ using System.Text;
 
 namespace Utility
 {
-    public class ConsumableData
-    {
-	private byte[] data;
-	private int offset;
-	public ConsumableData(byte[] data)
+	public class ConsumableData
 	{
-	    this.data = data;
-	    this.offset = 0;
-	}
+		private byte[] data;
+		private int offset;
+		public ConsumableData(byte[] data)
+		{
+			this.data = data;
+			this.offset = 0;
+		}
 
-        public ConsumableData(string data)
+		public ConsumableData(string data)
+		{
+			this.data = System.Text.Encoding.UTF8.GetBytes(data);
+			this.offset = 0;
+		}
+
+        public static ConsumableData operator +(in ConsumableData a, in ConsumableData b)
         {
-            this.data = System.Text.Encoding.UTF8.GetBytes(data);
-            this.offset = 0;
-        }
+			byte[] arrayA = a.SubArray();
+			byte[] arrayB = b.SubArray();
+			byte[] c = new byte[arrayA.Length + arrayB.Length];
+			int typeSize = System.Runtime.InteropServices.Marshal.SizeOf(
+			    arrayA.GetType().GetElementType());
+			Buffer.BlockCopy(arrayA, 0, c, 0, arrayA.Length * typeSize);
+			Buffer.BlockCopy(arrayB, 0, c, arrayA.Length, arrayB.Length);
+			return new(c);
+		}
 
 	public int Size
 	{
@@ -59,6 +71,13 @@ namespace Utility
 	{
 	    Encoding enc = Encoding.GetEncoding("UTF-8");	    
 	    string result = enc.GetString(SubArray(length));
+	    Consume(length);
+	    return result;
+	}
+
+	public byte[] readByte(int length)
+	{
+	    byte[] result = SubArray(length);
 	    Consume(length);
 	    return result;
 	}

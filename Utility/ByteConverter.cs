@@ -6,7 +6,67 @@ namespace Utility {
 	LITTLE
     }
 
-    class ByteConverter {
+    public class ByteConverter {
+	public static byte[] trim(in byte[] data) {
+	    int ptr = 0;
+	    int length = data.Length;
+	    while(data[ptr] == 0x0 && length > 0) {
+		ptr++;
+		length--;
+	    }
+	    return Misc.BlockCopy(in data, in ptr, in length);
+	}
+
+	public static byte[] ParseStrAsByteArray(in string data)
+        {
+	    byte[] result = new byte[data.Length / 2 + ((data.Length % 2 == 1) ? 1 : 0)];
+	    int idx = 0;
+	    foreach(char c in data)
+            {
+		byte val;
+		if('a' <= c && c <= 'f')
+                {
+		    val = (byte)(c - 'a' + 10);
+                }
+		else if ('A' <= c && c <= 'F')
+		{
+		    val = (byte)(c - 'A' + 10);
+		}
+		else if ('0' <= c && c <= '9')
+                {
+		    val = (byte)(c - '0');
+                }
+		else
+                {
+		    continue;
+                }
+		if(idx % 2 == 0)
+                {
+		    result[idx / 2] = (byte)(val << 4);
+                }
+		else
+                {
+		    result[idx / 2] |= (byte)(val & 0xFF);
+                }
+		idx++;
+				
+	    }
+	    return result;
+	}
+
+
+	public static byte[] Str2ByteArray(in string data) {
+	    return System.Text.Encoding.UTF8.GetBytes(data);
+	}
+
+	public static byte[] convertToByte(in UInt16 num, in Endian endian=Endian.BIG) {
+	    byte[] result = 
+		(endian == Endian.BIG) ? new byte[] { (byte)((num >> 8) & 0xFF) , (byte)(num & 0xFF)  }
+		: new byte[] { (byte)(num & 0xFF) , (byte)((num >> 8) & 0xFF)  };
+	    return result;
+	}
+
+
 	public static UInt16 convertToU16(in byte[] data, in Endian endian=Endian.BIG, in int offset = 0) {
 	    UInt16 result = (
 		(endian == Endian.BIG) 
