@@ -19,6 +19,7 @@ namespace Decrypt
 	    Console.Write("Input Passphrase:");
 	    return Console.ReadLine();   
 	}
+
         public Program(string[] args)
 	{
 	    if (args.Length < 2)
