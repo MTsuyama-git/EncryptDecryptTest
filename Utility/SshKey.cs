@@ -212,6 +212,10 @@ namespace Utility {
 	    uint encryptedLen = data.U32;
 	    byte[] key;
 
+	    if(verbose) {
+		Console.Write("pubKey:");
+		pubkey.dump();
+	    }
 
 	    byte[] rsa_e = pubkey.trimmedRawData;
 	    byte[] rsa_n = pubkey.trimmedRawData;
@@ -222,6 +226,10 @@ namespace Utility {
 	    int blockSize = cipher.blockSize;
 
 	    if(verbose) {
+		Console.WriteLine("rsa_e:");
+		new ConsumableData(rsa_e).dump();
+		Console.WriteLine("rsa_n:");
+		new ConsumableData(rsa_n).dump();
 		Console.WriteLine("magic:{0}",magic);
 		Console.WriteLine("cipherName:{0}",cipher_name);
 		Console.WriteLine("kdfName:{0}", kdf_name);
@@ -229,13 +237,15 @@ namespace Utility {
 		Console.WriteLine("nkeys:" + nkeys);
 		Console.WriteLine("encryptedLen:" + encryptedLen);
 		Console.WriteLine("pubKey:" + pubkey.Size);
-		Console.WriteLine("pubKeyType:" + pubkey.StrData);
+		// Console.WriteLine("pubKeyType:" + pubkey.StrData);
 		Console.Write("pubkey:");
 		pubkey.dump();
 		Console.WriteLine("keyLen:" + keyLen);
 		Console.WriteLine("ivLen:" + ivLen);
 		Console.WriteLine("authLen:" + authLen);
 		Console.WriteLine("blockSize:" + blockSize);
+		Console.WriteLine("data:");
+		data.dump();
 	    }
 
 	    if( encryptedLen < blockSize || (encryptedLen % blockSize) != 0) {
