@@ -304,6 +304,7 @@ namespace Utility {
 	    ConsumableData rsa_p = new(decrypted.rawData);
 	    ConsumableData rsa_q = new(decrypted.rawData);
 	    string comment = decrypted.StrData;
+
 	    CheckPadding(decrypted);
 	    var d_data = rsa_d.SubArray();
 	    Array.Reverse(d_data);
@@ -327,6 +328,22 @@ namespace Utility {
 
 	    Array.Reverse(dmp1b);
 	    Array.Reverse(dmq1b);
+
+	    Console.Write("rsa_n:");
+	    rsa_n.dump();
+	    Console.Write("rsa_e:");
+	    rsa_e.dump();
+	    Console.Write("rsa_d:");
+	    rsa_d.dump();
+	    Console.Write("rsa_p:");
+	    rsa_p.dump();
+	    Console.Write("rsa_q:");
+	    rsa_q.dump();
+	    Console.Write("dmp1:");
+	    new ConsumableData(dmp1b).dump();
+	    Console.Write("dmq1:");
+	    new ConsumableData(dmq1b).dump();
+
 
 
 	    return new RSAParameters {
