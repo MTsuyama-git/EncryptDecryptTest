@@ -16,8 +16,22 @@ namespace Decrypt
 	private static readonly int CHUNK_SIZE = 4096;
 
 	string passwordCb() {
+            ConsoleKeyInfo key;
+            String result = "";
 	    Console.Write("Input Passphrase:");
-	    return Console.ReadLine();   
+            do {
+                key = Console.ReadKey(true);
+           
+                // Ignore any key out of range.
+                if (key.Key != ConsoleKey.Enter) {
+                    // Append the character to the password.
+                    result += key.KeyChar;
+                    continue;
+                }
+                break;
+                // Exit if Enter key is pressed.
+            } while (true);
+	    return result;
 	}
 
         public Program(string[] args)
