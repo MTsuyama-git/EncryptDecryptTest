@@ -19,10 +19,10 @@ namespace Utility {
         {
 	    
 	    string[] lines = contents.Split("\n");
-	    return ReadSSHPublieKeyBody(lines);
+	    return ReadSSHPublicKeyBody(lines);
 	}
 
-	private static RSACryptoServiceProvider ReadSSHPublieKeyBody(string[] lines)
+	private static RSACryptoServiceProvider ReadSSHPublicKeyBody(string[] lines)
         {
 	    RSACryptoServiceProvider rsa = null;
 	    foreach(string line in lines)
