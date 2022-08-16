@@ -303,7 +303,7 @@ namespace Utility
             return temp;
         }
 
-        public void expandstate(byte[] key, in byte[] data=null)
+        public void expandstate(byte[] key, in byte[]? data=null)
         {
             UInt16 j;
             UInt32 temp, datal, datar;
