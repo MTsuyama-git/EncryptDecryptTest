@@ -1,0 +1,14 @@
+#compdef encrypt
+
+_encrypt() {
+    _arguments '1: :->input'
+    local -a inputs
+    inputs=(hoge foo bar)
+    case "$state" in
+	input)
+	    _values $state $(find . -type f -not -name \*~)
+	    ;;
+    esac
+}
+
+compdef _encrypt encrypt

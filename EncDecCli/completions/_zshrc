@@ -1,0 +1,7 @@
+export PATH=/path/to/completions:$PATH
+fpath=( /path/to/completions "${fpath[@]}" )
+autoload -Uz encrypt
+autoloca -Uz decrypt
+
+autoload -U compinit
+compinit -u
