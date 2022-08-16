@@ -69,7 +69,7 @@ namespace Utility
                     CheckKeyFmt(line);
                     var items = line.Split(del, StringSplitOptions.RemoveEmptyEntries);
                     // body
-                    if (items.Length >= 3)
+                    if (items.Length >= 2)
                     {
                         try
                         {
@@ -89,6 +89,76 @@ namespace Utility
                 }
             }
             return null;
+        }
+
+
+        public static RSACryptoServiceProvider? ParseSSHPublicPrivateKeyForEncrypt(string keyPath, Func<string>? passwordCb = null, bool verbose = false)
+        {
+            RSACryptoServiceProvider? rsa = null;
+            string? line;
+            bool notPrivate = false;
+            using (StreamReader sr = new(keyPath))
+                while ((line = sr.ReadLine()) != null)
+                {
+                    if (verbose)
+                    {
+                        Console.WriteLine("line:{0}:{1}:{2}:{3}", line, line.StartsWith("#"), line.StartsWith("\n"), line.Length == 0);
+                    }
+                    if (line.StartsWith("#") || line.StartsWith("\n") || line.Length == 0)
+                    {
+                        continue;
+                    }
+                    // body
+                    rsa = new();
+                    try
+                    {
+                        RSAParameters rsaParams = ParseSSHPublicKey(line);
+                        rsa.ImportParameters(rsaParams);
+                    }
+                    catch (Exception e)
+                    {
+                        if (verbose)
+                        {
+                            Console.WriteLine("Error:{0}", e.Message);
+                            Console.WriteLine("Trace:{0}", e.StackTrace);
+                        }
+                        if (notPrivate == false)
+                        {
+                            try
+                            {
+                                string contents = System.IO.File.ReadAllText(keyPath);
+                                if (contents.Substring(0, RsaPrivateKeyHeader.Length) == RsaPrivateKeyHeader)
+                                {
+                                    rsa.ImportRSAPrivateKey(ReadRSAPrivateKey(contents, passwordCb), out _);
+                                }
+                                else if (contents.Substring(0, OpenSSHPrivateKeyHeader.Length) == OpenSSHPrivateKeyHeader)
+                                {
+                                    rsa.ImportParameters(ReadOpenSSHPrivateKey(contents, passwordCb));
+                                }
+                                else
+                                {
+                                    throw new Exception();
+                                }
+                                return rsa;
+                            }
+                            catch (Exception e2)
+                            {
+                                if (verbose)
+                                {
+                                    Console.WriteLine("Error2:{0}", e2.Message);
+                                    Console.WriteLine("Trace2:{0}", e2.StackTrace);
+                                }
+                                rsa = null;
+                                notPrivate = true;
+                            }
+                        }
+                        continue;
+
+                    }
+                }
+
+            return rsa;
+
         }
 
         private static RSAParameters ParseSSHPublicKey(string contents)
@@ -174,9 +244,10 @@ namespace Utility
                     //cipher = SshCipher.ciphers[encryptInfo];
                 }
             }
-			if(iv == null) {
-				throw new Exception("Unsupported Private key");
-			}
+            if (iv == null)
+            {
+                throw new Exception("Unsupported Private key");
+            }
             if (encryptInfo[0] != "AES")
             {
                 Console.WriteLine("Unsupported Type:", encryptInfo[0]);

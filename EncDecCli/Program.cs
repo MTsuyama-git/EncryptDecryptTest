@@ -20,8 +20,16 @@ if (command == Mode_E.encrypt)
 {
     // encrypt
     dest = (arguments["output"].isNone) ? input + ".aes" : arguments["output"];
+    if (!dest.EndsWith(".aes"))
+    {
+        dest += ".aes";
+    }
     keyPath = (arguments["path_to_key"].isNone) ? System.IO.Path.Combine(userprofile, ".ssh", "id_rsa.pub") : arguments["path_to_key"];
-    RSACryptoServiceProvider provider = SSHKeyManager.ReadSSHPublicKey(keyPath);
+    RSACryptoServiceProvider? provider = SSHKeyManager.ParseSSHPublicPrivateKeyForEncrypt(keyPath, passwordCb);
+    if (provider == null)
+    {
+        throw new Exception("Invalid type key");
+    }
     using (FileStream inputStream = File.Open(input, FileMode.Open))
     {
         using (FileStream outputStream = File.Open(dest, FileMode.Create))
@@ -68,6 +76,10 @@ if (command == Mode_E.encrypt)
 else
 {
     //decrypt
+    if (!input.EndsWith("aes"))
+    {
+        throw new Exception("the file names " + input + " is not encrypted file");
+    }
     dest = (arguments["output"].isNone) ? input.Replace(".aes", "") : arguments["output"];
     keyPath = (arguments["path_to_key"].isNone) ? System.IO.Path.Combine(userprofile, ".ssh", "id_rsa") : arguments["path_to_key"];
     RSA rsa = SSHKeyManager.ReadSSHPrivateKey(keyPath, passwordCb);
